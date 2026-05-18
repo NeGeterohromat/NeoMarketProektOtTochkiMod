@@ -30,14 +30,17 @@ ALLOWED_HOSTS = []
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
 INSTALLED_APPS = [
-    'app',
-    # Add your apps here to enable them
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    'rest_framework',
+
+    'app',
+    'users.apps.UsersConfig',
 ]
 
 # Middleware framework
@@ -111,3 +114,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 STATIC_URL = '/static/'
 STATIC_ROOT = posixpath.join(*(BASE_DIR.split(os.path.sep) + ['static']))
+
+AUTH_USER_MODEL = 'users.User'
