@@ -108,7 +108,7 @@ class ProductModeration(models.Model):
         # Реализация ограничения CHECK (queue_priority BETWEEN 1 AND 4) на уровне БД
         constraints = [
             models.CheckConstraint(
-                check=models.Q(queue_priority__gte=1, queue_priority__lte=4),
+                condition=models.Q(queue_priority__gte=1, queue_priority__lte=4),
                 name='check_queue_priority_range'
             )
         ]
