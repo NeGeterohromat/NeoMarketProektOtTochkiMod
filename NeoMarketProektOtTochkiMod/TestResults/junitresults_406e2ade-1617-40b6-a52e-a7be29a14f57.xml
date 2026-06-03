@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="4.787" timestamp="2026-06-03T16:03:38.054047+05:00" hostname="WIN-T9HMN0FRTB7"><testcase classname="app.tests.ApproveTicketTests" name="test_approve_after_edited_returns_409" file="app\tests.py" line="69" time="1.277"><failure message="django.db.utils.IntegrityError: duplicate key value violates unique constraint &quot;users_user_email_key&quot;&#10;DETAIL:  Key (email)=() already exists.">self = &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DF8B8050&gt;
+sql = 'INSERT INTO "users_user" ("password", "last_login", "is_superuser", "username", "first_name", "last_name", "is_staff"...", "company_name", "created_at", "updated_at") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+params = ('pbkdf2_sha256$1000000$WiJ9bzdtD5RuBxyBCYLA52$d2iVcAkdj97xs3eGsWUlU/Gwvc07Lb0TozMD+sZ0LLY=', None, False, 'mod2', '', '', ...)
+ignored_wrapper_args = (False, {'connection': &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;, 'cursor': &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DF8B8050&gt;})
+
+    def _execute(self, sql, params, *ignored_wrapper_args):
+        # Raise a warning during app initialization (stored_app_configs is only
+        # ever set during testing).
+        if not apps.ready and not apps.stored_app_configs:
+            warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+        self.db.validate_no_broken_transaction()
+        with self.db.wrap_database_errors:
+            if params is None:
+                # params default might be backend specific.
+                return self.cursor.execute(sql)
+            else:
+&gt;               return self.cursor.execute(sql, params)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "users_user_email_key"
+E               DETAIL:  Key (email)=() already exists.
+
+env\Lib\site-packages\django\db\backends\utils.py:105: UniqueViolation
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;app.tests.ApproveTicketTests testMethod=test_approve_after_edited_returns_409&gt;
+
+    def setUp(self):
+        self.moderator = User.objects.create_user(username='mod1', password='password123')
+&gt;       self.other_moderator = User.objects.create_user(username='mod2', password='password123')
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app\tests.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\contrib\auth\models.py:175: in create_user
+    return self._create_user(username, email, password, **extra_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\contrib\auth\models.py:163: in _create_user
+    user.save(using=self._db)
+env\Lib\site-packages\django\contrib\auth\base_user.py:65: in save
+    super().save(*args, **kwargs)
+env\Lib\site-packages\django\db\models\base.py:902: in save
+    self.save_base(
+env\Lib\site-packages\django\db\models\base.py:1008: in save_base
+    updated = self._save_table(
+env\Lib\site-packages\django\db\models\base.py:1169: in _save_table
+    results = self._do_insert(
+env\Lib\site-packages\django\db\models\base.py:1210: in _do_insert
+    return manager._insert(
+env\Lib\site-packages\django\db\models\manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\models\query.py:1873: in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\models\sql\compiler.py:1882: in execute_sql
+    cursor.execute(sql, params)
+env\Lib\site-packages\django\db\backends\utils.py:79: in execute
+    return self._execute_with_wrappers(
+env\Lib\site-packages\django\db\backends\utils.py:92: in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\utils.py:100: in _execute
+    with self.db.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DF8B8050&gt;
+sql = 'INSERT INTO "users_user" ("password", "last_login", "is_superuser", "username", "first_name", "last_name", "is_staff"...", "company_name", "created_at", "updated_at") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+params = ('pbkdf2_sha256$1000000$WiJ9bzdtD5RuBxyBCYLA52$d2iVcAkdj97xs3eGsWUlU/Gwvc07Lb0TozMD+sZ0LLY=', None, False, 'mod2', '', '', ...)
+ignored_wrapper_args = (False, {'connection': &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;, 'cursor': &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DF8B8050&gt;})
+
+    def _execute(self, sql, params, *ignored_wrapper_args):
+        # Raise a warning during app initialization (stored_app_configs is only
+        # ever set during testing).
+        if not apps.ready and not apps.stored_app_configs:
+            warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+        self.db.validate_no_broken_transaction()
+        with self.db.wrap_database_errors:
+            if params is None:
+                # params default might be backend specific.
+                return self.cursor.execute(sql)
+            else:
+&gt;               return self.cursor.execute(sql, params)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               django.db.utils.IntegrityError: duplicate key value violates unique constraint "users_user_email_key"
+E               DETAIL:  Key (email)=() already exists.
+
+env\Lib\site-packages\django\db\backends\utils.py:105: IntegrityError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_others_card_returns_403" file="app\tests.py" line="57" time="0.850"><failure message="django.db.utils.IntegrityError: duplicate key value violates unique constraint &quot;users_user_email_key&quot;&#10;DETAIL:  Key (email)=() already exists.">self = &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DFE61D90&gt;
+sql = 'INSERT INTO "users_user" ("password", "last_login", "is_superuser", "username", "first_name", "last_name", "is_staff"...", "company_name", "created_at", "updated_at") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+params = ('pbkdf2_sha256$1000000$EGAFhNKaUnZRwosrFRh0Hq$euu36R9ET1Kk9jH/uKf6UcmNhLpcG0pCZ4sTeb/HJPA=', None, False, 'mod2', '', '', ...)
+ignored_wrapper_args = (False, {'connection': &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;, 'cursor': &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DFE61D90&gt;})
+
+    def _execute(self, sql, params, *ignored_wrapper_args):
+        # Raise a warning during app initialization (stored_app_configs is only
+        # ever set during testing).
+        if not apps.ready and not apps.stored_app_configs:
+            warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+        self.db.validate_no_broken_transaction()
+        with self.db.wrap_database_errors:
+            if params is None:
+                # params default might be backend specific.
+                return self.cursor.execute(sql)
+            else:
+&gt;               return self.cursor.execute(sql, params)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "users_user_email_key"
+E               DETAIL:  Key (email)=() already exists.
+
+env\Lib\site-packages\django\db\backends\utils.py:105: UniqueViolation
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;app.tests.ApproveTicketTests testMethod=test_approve_others_card_returns_403&gt;
+
+    def setUp(self):
+        self.moderator = User.objects.create_user(username='mod1', password='password123')
+&gt;       self.other_moderator = User.objects.create_user(username='mod2', password='password123')
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app\tests.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\contrib\auth\models.py:175: in create_user
+    return self._create_user(username, email, password, **extra_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\contrib\auth\models.py:163: in _create_user
+    user.save(using=self._db)
+env\Lib\site-packages\django\contrib\auth\base_user.py:65: in save
+    super().save(*args, **kwargs)
+env\Lib\site-packages\django\db\models\base.py:902: in save
+    self.save_base(
+env\Lib\site-packages\django\db\models\base.py:1008: in save_base
+    updated = self._save_table(
+env\Lib\site-packages\django\db\models\base.py:1169: in _save_table
+    results = self._do_insert(
+env\Lib\site-packages\django\db\models\base.py:1210: in _do_insert
+    return manager._insert(
+env\Lib\site-packages\django\db\models\manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\models\query.py:1873: in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\models\sql\compiler.py:1882: in execute_sql
+    cursor.execute(sql, params)
+env\Lib\site-packages\django\db\backends\utils.py:79: in execute
+    return self._execute_with_wrappers(
+env\Lib\site-packages\django\db\backends\utils.py:92: in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\utils.py:100: in _execute
+    with self.db.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DFE61D90&gt;
+sql = 'INSERT INTO "users_user" ("password", "last_login", "is_superuser", "username", "first_name", "last_name", "is_staff"...", "company_name", "created_at", "updated_at") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+params = ('pbkdf2_sha256$1000000$EGAFhNKaUnZRwosrFRh0Hq$euu36R9ET1Kk9jH/uKf6UcmNhLpcG0pCZ4sTeb/HJPA=', None, False, 'mod2', '', '', ...)
+ignored_wrapper_args = (False, {'connection': &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;, 'cursor': &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DFE61D90&gt;})
+
+    def _execute(self, sql, params, *ignored_wrapper_args):
+        # Raise a warning during app initialization (stored_app_configs is only
+        # ever set during testing).
+        if not apps.ready and not apps.stored_app_configs:
+            warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+        self.db.validate_no_broken_transaction()
+        with self.db.wrap_database_errors:
+            if params is None:
+                # params default might be backend specific.
+                return self.cursor.execute(sql)
+            else:
+&gt;               return self.cursor.execute(sql, params)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               django.db.utils.IntegrityError: duplicate key value violates unique constraint "users_user_email_key"
+E               DETAIL:  Key (email)=() already exists.
+
+env\Lib\site-packages\django\db\backends\utils.py:105: IntegrityError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_transitions_to_moderated_and_emits_event" file="app\tests.py" line="35" time="0.843"><failure message="django.db.utils.IntegrityError: duplicate key value violates unique constraint &quot;users_user_email_key&quot;&#10;DETAIL:  Key (email)=() already exists.">self = &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DF99F310&gt;
+sql = 'INSERT INTO "users_user" ("password", "last_login", "is_superuser", "username", "first_name", "last_name", "is_staff"...", "company_name", "created_at", "updated_at") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+params = ('pbkdf2_sha256$1000000$i8OXYsY9YoeQ6DAyCJj1mr$lj284VN78uqvyiD+tZD71K1KJ/0ek5rM7UPlzoBxurs=', None, False, 'mod2', '', '', ...)
+ignored_wrapper_args = (False, {'connection': &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;, 'cursor': &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DF99F310&gt;})
+
+    def _execute(self, sql, params, *ignored_wrapper_args):
+        # Raise a warning during app initialization (stored_app_configs is only
+        # ever set during testing).
+        if not apps.ready and not apps.stored_app_configs:
+            warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+        self.db.validate_no_broken_transaction()
+        with self.db.wrap_database_errors:
+            if params is None:
+                # params default might be backend specific.
+                return self.cursor.execute(sql)
+            else:
+&gt;               return self.cursor.execute(sql, params)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "users_user_email_key"
+E               DETAIL:  Key (email)=() already exists.
+
+env\Lib\site-packages\django\db\backends\utils.py:105: UniqueViolation
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;app.tests.ApproveTicketTests testMethod=test_approve_transitions_to_moderated_and_emits_event&gt;
+
+    def setUp(self):
+        self.moderator = User.objects.create_user(username='mod1', password='password123')
+&gt;       self.other_moderator = User.objects.create_user(username='mod2', password='password123')
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app\tests.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\contrib\auth\models.py:175: in create_user
+    return self._create_user(username, email, password, **extra_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\contrib\auth\models.py:163: in _create_user
+    user.save(using=self._db)
+env\Lib\site-packages\django\contrib\auth\base_user.py:65: in save
+    super().save(*args, **kwargs)
+env\Lib\site-packages\django\db\models\base.py:902: in save
+    self.save_base(
+env\Lib\site-packages\django\db\models\base.py:1008: in save_base
+    updated = self._save_table(
+env\Lib\site-packages\django\db\models\base.py:1169: in _save_table
+    results = self._do_insert(
+env\Lib\site-packages\django\db\models\base.py:1210: in _do_insert
+    return manager._insert(
+env\Lib\site-packages\django\db\models\manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\models\query.py:1873: in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\models\sql\compiler.py:1882: in execute_sql
+    cursor.execute(sql, params)
+env\Lib\site-packages\django\db\backends\utils.py:79: in execute
+    return self._execute_with_wrappers(
+env\Lib\site-packages\django\db\backends\utils.py:92: in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\utils.py:100: in _execute
+    with self.db.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DF99F310&gt;
+sql = 'INSERT INTO "users_user" ("password", "last_login", "is_superuser", "username", "first_name", "last_name", "is_staff"...", "company_name", "created_at", "updated_at") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+params = ('pbkdf2_sha256$1000000$i8OXYsY9YoeQ6DAyCJj1mr$lj284VN78uqvyiD+tZD71K1KJ/0ek5rM7UPlzoBxurs=', None, False, 'mod2', '', '', ...)
+ignored_wrapper_args = (False, {'connection': &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;, 'cursor': &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3DF99F310&gt;})
+
+    def _execute(self, sql, params, *ignored_wrapper_args):
+        # Raise a warning during app initialization (stored_app_configs is only
+        # ever set during testing).
+        if not apps.ready and not apps.stored_app_configs:
+            warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+        self.db.validate_no_broken_transaction()
+        with self.db.wrap_database_errors:
+            if params is None:
+                # params default might be backend specific.
+                return self.cursor.execute(sql)
+            else:
+&gt;               return self.cursor.execute(sql, params)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               django.db.utils.IntegrityError: duplicate key value violates unique constraint "users_user_email_key"
+E               DETAIL:  Key (email)=() already exists.
+
+env\Lib\site-packages\django\db\backends\utils.py:105: IntegrityError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_without_sku_returns_409" file="app\tests.py" line="81" time="0.903"><failure message="django.db.utils.IntegrityError: duplicate key value violates unique constraint &quot;users_user_email_key&quot;&#10;DETAIL:  Key (email)=() already exists.">self = &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3E0015510&gt;
+sql = 'INSERT INTO "users_user" ("password", "last_login", "is_superuser", "username", "first_name", "last_name", "is_staff"...", "company_name", "created_at", "updated_at") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+params = ('pbkdf2_sha256$1000000$mjc5BqcO65XGvgMzjMWc4I$cLL6V2OHEhVaMl/Bfnpw0GvKKsk3mUoA2xFNt6tfVSE=', None, False, 'mod2', '', '', ...)
+ignored_wrapper_args = (False, {'connection': &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;, 'cursor': &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3E0015510&gt;})
+
+    def _execute(self, sql, params, *ignored_wrapper_args):
+        # Raise a warning during app initialization (stored_app_configs is only
+        # ever set during testing).
+        if not apps.ready and not apps.stored_app_configs:
+            warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+        self.db.validate_no_broken_transaction()
+        with self.db.wrap_database_errors:
+            if params is None:
+                # params default might be backend specific.
+                return self.cursor.execute(sql)
+            else:
+&gt;               return self.cursor.execute(sql, params)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "users_user_email_key"
+E               DETAIL:  Key (email)=() already exists.
+
+env\Lib\site-packages\django\db\backends\utils.py:105: UniqueViolation
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;app.tests.ApproveTicketTests testMethod=test_approve_without_sku_returns_409&gt;
+
+    def setUp(self):
+        self.moderator = User.objects.create_user(username='mod1', password='password123')
+&gt;       self.other_moderator = User.objects.create_user(username='mod2', password='password123')
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app\tests.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\contrib\auth\models.py:175: in create_user
+    return self._create_user(username, email, password, **extra_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\contrib\auth\models.py:163: in _create_user
+    user.save(using=self._db)
+env\Lib\site-packages\django\contrib\auth\base_user.py:65: in save
+    super().save(*args, **kwargs)
+env\Lib\site-packages\django\db\models\base.py:902: in save
+    self.save_base(
+env\Lib\site-packages\django\db\models\base.py:1008: in save_base
+    updated = self._save_table(
+env\Lib\site-packages\django\db\models\base.py:1169: in _save_table
+    results = self._do_insert(
+env\Lib\site-packages\django\db\models\base.py:1210: in _do_insert
+    return manager._insert(
+env\Lib\site-packages\django\db\models\manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\models\query.py:1873: in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\models\sql\compiler.py:1882: in execute_sql
+    cursor.execute(sql, params)
+env\Lib\site-packages\django\db\backends\utils.py:79: in execute
+    return self._execute_with_wrappers(
+env\Lib\site-packages\django\db\backends\utils.py:92: in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\utils.py:100: in _execute
+    with self.db.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3E0015510&gt;
+sql = 'INSERT INTO "users_user" ("password", "last_login", "is_superuser", "username", "first_name", "last_name", "is_staff"...", "company_name", "created_at", "updated_at") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+params = ('pbkdf2_sha256$1000000$mjc5BqcO65XGvgMzjMWc4I$cLL6V2OHEhVaMl/Bfnpw0GvKKsk3mUoA2xFNt6tfVSE=', None, False, 'mod2', '', '', ...)
+ignored_wrapper_args = (False, {'connection': &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;, 'cursor': &lt;django.db.backends.utils.CursorWrapper object at 0x000001E3E0015510&gt;})
+
+    def _execute(self, sql, params, *ignored_wrapper_args):
+        # Raise a warning during app initialization (stored_app_configs is only
+        # ever set during testing).
+        if not apps.ready and not apps.stored_app_configs:
+            warnings.warn(self.APPS_NOT_READY_WARNING_MSG, category=RuntimeWarning)
+        self.db.validate_no_broken_transaction()
+        with self.db.wrap_database_errors:
+            if params is None:
+                # params default might be backend specific.
+                return self.cursor.execute(sql)
+            else:
+&gt;               return self.cursor.execute(sql, params)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               django.db.utils.IntegrityError: duplicate key value violates unique constraint "users_user_email_key"
+E               DETAIL:  Key (email)=() already exists.
+
+env\Lib\site-packages\django\db\backends\utils.py:105: IntegrityError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>
