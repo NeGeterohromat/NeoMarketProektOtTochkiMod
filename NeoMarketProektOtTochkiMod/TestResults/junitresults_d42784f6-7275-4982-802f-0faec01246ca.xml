@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="26.757" timestamp="2026-06-03T16:36:17.787552+05:00" hostname="WIN-T9HMN0FRTB7"><testcase classname="app.tests.ApproveTicketTests" name="test_approve_transitions_to_moderated_and_emits_event" file="app\tests.py" line="35" time="26.207"><failure message="AssertionError: 404 != 200">self = &lt;app.tests.ApproveTicketTests testMethod=test_approve_transitions_to_moderated_and_emits_event&gt;
+mock_post = &lt;MagicMock name='post' id='1628918338640'&gt;
+mock_get = &lt;MagicMock name='get' id='1628918022480'&gt;
+
+    @patch('app.services.requests.get')
+    @patch('app.services.requests.post')
+    def test_approve_transitions_to_moderated_and_emits_event(self, mock_post, mock_get):
+        # Happy path
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {"skus": [{"id": str(uuid.uuid4()), "price": 1000}]}
+        mock_post.return_value.status_code = 204
+    
+        response = self.client.post(self.url, {"comment": "Товар соответствует требованиям"}, format='json')
+    
+&gt;       self.assertEqual(response.status_code, status.HTTP_200_OK)
+E       AssertionError: 404 != 200
+
+app\tests.py:46: AssertionError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Not Found: /api/v1/tickets/239591a8-c276-486a-adcf-6d3e331d6172/approve/
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>

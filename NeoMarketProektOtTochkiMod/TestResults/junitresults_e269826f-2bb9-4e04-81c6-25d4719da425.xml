@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="83.134" timestamp="2026-06-03T16:33:15.702285+05:00" hostname="WIN-T9HMN0FRTB7"><testcase classname="app.tests.ApproveTicketTests" name="test_approve_transitions_to_moderated_and_emits_event" file="app\tests.py" line="35" time="82.495"><failure message="ValueError: Content-Type header is &quot;text/html; charset=utf-8&quot;, not &quot;application/json&quot;">self = &lt;app.tests.ApproveTicketTests testMethod=test_approve_transitions_to_moderated_and_emits_event&gt;
+mock_post = &lt;MagicMock name='post' id='3019753202640'&gt;
+mock_get = &lt;MagicMock name='get' id='3019753042576'&gt;
+
+    @patch('app.services.requests.get')
+    @patch('app.services.requests.post')
+    def test_approve_transitions_to_moderated_and_emits_event(self, mock_post, mock_get):
+        # Happy path
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {"skus": [{"id": str(uuid.uuid4()), "price": 1000}]}
+        mock_post.return_value.status_code = 204
+    
+        response = self.client.post(self.url, {"comment": "Товар соответствует требованиям"}, format='json')
+&gt;       print(response.json())
+              ^^^^^^^^^^^^^^^
+
+app\tests.py:45: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;rest_framework.test.APIClient object at 0x000002BF174663D0&gt;
+response = &lt;HttpResponseNotFound status_code=404, "text/html; charset=utf-8"&gt;
+extra = {}
+
+    def _parse_json(self, response, **extra):
+        if not hasattr(response, "_json"):
+            if not JSON_CONTENT_TYPE_RE.match(response.get("Content-Type")):
+&gt;               raise ValueError(
+                    'Content-Type header is "%s", not "application/json"'
+                    % response.get("Content-Type")
+                )
+E               ValueError: Content-Type header is "text/html; charset=utf-8", not "application/json"
+
+env\Lib\site-packages\django\test\client.py:951: ValueError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Not Found: /api/v1/tickets/ab142d76-93ec-4b17-8df8-87cc3f252e91/approve/
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>

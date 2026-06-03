@@ -8,7 +8,7 @@ from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from app import forms, views
 
-from app.views import CreateEventAPIView
+from app.views import CreateEventAPIView, ApproveProductView
 
 
 urlpatterns = [
@@ -29,5 +29,10 @@ urlpatterns = [
     #      name='login'),
     # path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
     path('admin/', admin.site.urls),
-    path('api/v1/b2b/events/', CreateEventAPIView.as_view(), name="b2b-events")
+    path('api/v1/b2b/events/', CreateEventAPIView.as_view(), name="b2b-events"),
+    path(
+        'api/v1/tickets/<uuid:ticket_id>/approve', 
+        ApproveProductView.as_view(), 
+        name='approve-product'
+    ),
 ]

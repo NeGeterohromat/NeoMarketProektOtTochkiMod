@@ -32,8 +32,15 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="app\exceptions.py" />
     <Compile Include="app\forms.py" />
     <Compile Include="app\models.py" />
+    <Compile Include="app\services.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="app\serializers.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\tests.py" />
     <Compile Include="app\views.py" />
     <Compile Include="app\__init__.py" />
@@ -43,6 +50,16 @@
     <Compile Include="NeoMarketProektOtTochkiMod\settings.py" />
     <Compile Include="NeoMarketProektOtTochkiMod\urls.py" />
     <Compile Include="NeoMarketProektOtTochkiMod\wsgi.py" />
+    <Compile Include="users\admin.py" />
+    <Compile Include="users\apps.py" />
+    <Compile Include="users\migrations\0001_initial.py" />
+    <Compile Include="users\migrations\__init__.py" />
+    <Compile Include="users\models.py" />
+    <Compile Include="users\serializers.py" />
+    <Compile Include="users\tests.py" />
+    <Compile Include="users\urls.py" />
+    <Compile Include="users\views.py" />
+    <Compile Include="users\__init__.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="app\" />
@@ -55,8 +72,11 @@
     <Folder Include="app\templates\" />
     <Folder Include="app\templates\app\" />
     <Folder Include="NeoMarketProektOtTochkiMod\" />
+    <Folder Include="users\" />
+    <Folder Include="users\migrations\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="pytest.ini" />
     <Content Include="requirements.txt" />
     <Content Include="db.sqlite3" />
     <Content Include="app\static\app\content\bootstrap.css" />

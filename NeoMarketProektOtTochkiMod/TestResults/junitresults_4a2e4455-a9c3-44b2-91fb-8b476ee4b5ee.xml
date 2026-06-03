@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="4" time="4.088" timestamp="2026-06-03T17:00:36.592411+05:00" hostname="WIN-T9HMN0FRTB7"><testcase classname="app.tests.ApproveTicketTests" name="test_approve_after_edited_returns_409" file="app\tests.py" line="77" time="1.317"><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Conflict: /api/v1/tickets/f118537d-a94f-4ad2-8f93-00e486a4d2fc/approve
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_others_card_returns_403" file="app\tests.py" line="65" time="0.857"><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Forbidden: /api/v1/tickets/321ea1a9-0243-44b3-be1c-9a0ac2556330/approve
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_transitions_to_moderated_and_emits_event" file="app\tests.py" line="36" time="0.851"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_without_sku_returns_409" file="app\tests.py" line="89" time="0.886"><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Conflict: /api/v1/tickets/c1aad79e-4428-4a7d-b1a2-ae279daec3c0/approve
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>

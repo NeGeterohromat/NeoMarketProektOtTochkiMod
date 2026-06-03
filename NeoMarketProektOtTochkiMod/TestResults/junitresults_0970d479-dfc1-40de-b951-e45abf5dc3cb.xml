@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="4.274" timestamp="2026-06-03T16:27:15.238971+05:00" hostname="WIN-T9HMN0FRTB7"><testcase classname="app.tests.ApproveTicketTests" name="test_approve_after_edited_returns_409" file="app\tests.py" line="69" time="1.389"><failure message="AssertionError: 404 != 409">self = &lt;app.tests.ApproveTicketTests testMethod=test_approve_after_edited_returns_409&gt;
+mock_get = &lt;MagicMock name='get' id='2614334200144'&gt;
+
+    @patch('app.services.requests.get')
+    def test_approve_after_edited_returns_409(self, mock_get):
+        # Unhappy: продавец отредактировал, статус сбросился (или не IN_REVIEW)
+        self.moderation.status = ProductModeration.StatusChoices.PENDING
+        self.moderation.save()
+    
+        response = self.client.post(self.url, format='json')
+    
+&gt;       self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+E       AssertionError: 404 != 409
+
+app\tests.py:78: AssertionError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Not Found: /api/v1/tickets/1f59d26f-39d3-40cf-97ce-81310f0ef856/approve/
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_others_card_returns_403" file="app\tests.py" line="57" time="0.848"><failure message="AssertionError: 404 != 403">self = &lt;app.tests.ApproveTicketTests testMethod=test_approve_others_card_returns_403&gt;
+mock_get = &lt;MagicMock name='get' id='2614334920656'&gt;
+
+    @patch('app.services.requests.get')
+    def test_approve_others_card_returns_403(self, mock_get):
+        # Unhappy: чужая карточка
+        self.moderation.moderator_id = self.other_moderator
+        self.moderation.save()
+    
+        response = self.client.post(self.url, format='json')
+    
+&gt;       self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+E       AssertionError: 404 != 403
+
+app\tests.py:66: AssertionError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Not Found: /api/v1/tickets/2e792cb0-42f1-4252-83ac-3fa4abf456ff/approve/
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_transitions_to_moderated_and_emits_event" file="app\tests.py" line="35" time="0.849"><failure message="AssertionError: 404 != 200">self = &lt;app.tests.ApproveTicketTests testMethod=test_approve_transitions_to_moderated_and_emits_event&gt;
+mock_post = &lt;MagicMock name='post' id='2614334221072'&gt;
+mock_get = &lt;MagicMock name='get' id='2614335990288'&gt;
+
+    @patch('app.services.requests.get')
+    @patch('app.services.requests.post')
+    def test_approve_transitions_to_moderated_and_emits_event(self, mock_post, mock_get):
+        # Happy path
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {"skus": [{"id": str(uuid.uuid4()), "price": 1000}]}
+        mock_post.return_value.status_code = 204
+    
+        response = self.client.post(self.url, {"comment": "Товар соответствует требованиям"}, format='json')
+    
+&gt;       self.assertEqual(response.status_code, status.HTTP_200_OK)
+E       AssertionError: 404 != 200
+
+app\tests.py:46: AssertionError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Not Found: /api/v1/tickets/0ed067a2-1a33-4721-aa76-345ec7a5d30d/approve/
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_without_sku_returns_409" file="app\tests.py" line="81" time="0.865"><failure message="AssertionError: 404 != 409">self = &lt;app.tests.ApproveTicketTests testMethod=test_approve_without_sku_returns_409&gt;
+mock_get = &lt;MagicMock name='get' id='2614336012624'&gt;
+
+    @patch('app.services.requests.get')
+    def test_approve_without_sku_returns_409(self, mock_get):
+        # Unhappy: товар без SKU
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {"skus": []} # 0 SKU
+    
+        response = self.client.post(self.url, format='json')
+    
+&gt;       self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+E       AssertionError: 404 != 409
+
+app\tests.py:90: AssertionError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Not Found: /api/v1/tickets/43ee81a2-6ff0-4a26-821a-f1c2ead701bf/approve/
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>

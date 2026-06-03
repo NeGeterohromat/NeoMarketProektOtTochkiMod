@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="1.540" timestamp="2026-06-03T16:49:22.054313+05:00" hostname="WIN-T9HMN0FRTB7"><testcase classname="app.tests.ApproveTicketTests" name="test_approve_transitions_to_moderated_and_emits_event" file="app\tests.py" line="36" time="1.370"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+111
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>

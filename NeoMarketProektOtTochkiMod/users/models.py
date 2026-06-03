@@ -7,7 +7,7 @@ from django.core.validators import RegexValidator
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField(_('email address'), unique=True)
+    #email = models.EmailField(_('email address'), unique=True)
     phone = models.CharField(
         _('phone number'),
         max_length=20,
