@@ -98,3 +98,14 @@ class ApproveTicketTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(response.data['code'], 'CONFLICT')
         self.assertIn('no SKUs', response.data['message'])
+
+    @patch('app.services.requests.get')
+    @patch('app.services.requests.post')
+    def test_string_url_works(self, mock_post_event, mock_get_product):
+        mock_get_product.return_value.status_code = 200
+        mock_get_product.return_value.json.return_value = {"skus": [{"id": str(uuid.uuid4()), "price": 1000}]}
+        mock_post_event.return_value.status_code = 204
+        url = f'/api/v1/tickets/{self.moderation.id}/approve'
+        response = self.client.post(url,{"comment": "Товар соответствует требованиям"}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

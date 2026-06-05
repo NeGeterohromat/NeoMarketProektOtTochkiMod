@@ -1,0 +1,2061 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="5" failures="0" skipped="0" tests="5" time="5.020" timestamp="2026-06-05T17:49:17.478971+05:00" hostname="WIN-T9HMN0FRTB7"><testcase classname="app.tests.ApproveTicketTests" name="test_approve_after_edited_returns_409" file="app\tests.py" line="77" time="4.079"><error message="failed on setup with &quot;django.db.utils.OperationalError: connection to server at &quot;127.0.0.1&quot;, port 5433 failed: Connection refused (0x0000274D/10061)&#10;&#09;Is the server running on that host and accepting TCP/IP connections?&quot;">self = &lt;DatabaseWrapper vendor='postgresql' alias='__no_db__'&gt;
+
+    @async_unsafe
+    def ensure_connection(self):
+        """Guarantee that a connection to the database is established."""
+        if self.connection is None:
+            if self.in_atomic_block and self.closed_in_transaction:
+                raise ProgrammingError(
+                    "Cannot open a new connection in an atomic block."
+                )
+            with self.wrap_database_errors:
+&gt;               self.connect()
+
+env\Lib\site-packages\django\db\backends\base\base.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=postgres client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'postgres', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       psycopg2.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;
+
+    @contextmanager
+    def _nodb_cursor(self):
+        cursor = None
+        try:
+&gt;           with super()._nodb_cursor() as cursor:
+
+env\Lib\site-packages\django\db\backends\postgresql\base.py:507: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:712: in _nodb_cursor
+    with conn.cursor() as cursor:
+         ^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:278: in ensure_connection
+    with self.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+env\Lib\site-packages\django\db\backends\base\base.py:279: in ensure_connection
+    self.connect()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=postgres client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'postgres', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       django.db.utils.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+During handling of the above exception, another exception occurred:
+
+self = &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;
+
+    @async_unsafe
+    def ensure_connection(self):
+        """Guarantee that a connection to the database is established."""
+        if self.connection is None:
+            if self.in_atomic_block and self.closed_in_transaction:
+                raise ProgrammingError(
+                    "Cannot open a new connection in an atomic block."
+                )
+            with self.wrap_database_errors:
+&gt;               self.connect()
+
+env\Lib\site-packages\django\db\backends\base\base.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=mydatabase client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'mydatabase', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       psycopg2.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+request = &lt;SubRequest '_django_setup_unittest' for &lt;TestCaseFunction test_approve_after_edited_returns_409&gt;&gt;
+django_db_blocker = &lt;pytest_django.plugin.DjangoDbBlocker object at 0x0000020A4982C350&gt;
+
+    @pytest.fixture(autouse=True, scope="class")
+    def _django_setup_unittest(
+        request: pytest.FixtureRequest,
+        django_db_blocker: DjangoDbBlocker,
+    ) -&gt; Generator[None, None, None]:
+        """Setup a django unittest, internal to pytest-django."""
+        if not django_settings_is_configured() or not is_django_unittest(request):
+            yield
+            return
+    
+        # Fix/patch pytest.
+        # Before pytest 5.4: https://github.com/pytest-dev/pytest/issues/5991
+        # After pytest 5.4: https://github.com/pytest-dev/pytest-django/issues/824
+        from _pytest.unittest import TestCaseFunction
+    
+        original_runtest = TestCaseFunction.runtest
+    
+        def non_debugging_runtest(self) -&gt; None:  # noqa: ANN001
+            self._testcase(result=self)
+    
+        from django.test import SimpleTestCase
+    
+        assert issubclass(request.cls, SimpleTestCase)  # Guarded by 'is_django_unittest'
+        try:
+            TestCaseFunction.runtest = non_debugging_runtest  # type: ignore[method-assign]
+    
+            # Don't set up the DB if the unittest does not require DB.
+            # The `databases` propery seems like the best indicator for that.
+            if request.cls.databases:
+&gt;               request.getfixturevalue("django_db_setup")
+
+env\Lib\site-packages\pytest_django\plugin.py:598: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\pytest_django\fixtures.py:186: in django_db_setup
+    db_cfg = setup_databases(
+env\Lib\site-packages\django\test\utils.py:204: in setup_databases
+    connection.creation.create_test_db(
+env\Lib\site-packages\django\db\backends\base\creation.py:62: in create_test_db
+    self._create_test_db(verbosity, autoclobber, keepdb)
+env\Lib\site-packages\django\db\backends\base\creation.py:202: in _create_test_db
+    with self._nodb_cursor() as cursor:
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:533: in _nodb_cursor
+    with conn.cursor() as cursor:
+         ^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:278: in ensure_connection
+    with self.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+env\Lib\site-packages\django\db\backends\base\base.py:279: in ensure_connection
+    self.connect()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=mydatabase client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'mydatabase', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       django.db.utils.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError</error><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_others_card_returns_403" file="app\tests.py" line="65" time="0.001"><error message="failed on setup with &quot;django.db.utils.OperationalError: connection to server at &quot;127.0.0.1&quot;, port 5433 failed: Connection refused (0x0000274D/10061)&#10;&#09;Is the server running on that host and accepting TCP/IP connections?&quot;">self = &lt;DatabaseWrapper vendor='postgresql' alias='__no_db__'&gt;
+
+    @async_unsafe
+    def ensure_connection(self):
+        """Guarantee that a connection to the database is established."""
+        if self.connection is None:
+            if self.in_atomic_block and self.closed_in_transaction:
+                raise ProgrammingError(
+                    "Cannot open a new connection in an atomic block."
+                )
+            with self.wrap_database_errors:
+&gt;               self.connect()
+
+env\Lib\site-packages\django\db\backends\base\base.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=postgres client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'postgres', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       psycopg2.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;
+
+    @contextmanager
+    def _nodb_cursor(self):
+        cursor = None
+        try:
+&gt;           with super()._nodb_cursor() as cursor:
+
+env\Lib\site-packages\django\db\backends\postgresql\base.py:507: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:712: in _nodb_cursor
+    with conn.cursor() as cursor:
+         ^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:278: in ensure_connection
+    with self.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+env\Lib\site-packages\django\db\backends\base\base.py:279: in ensure_connection
+    self.connect()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=postgres client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'postgres', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       django.db.utils.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+During handling of the above exception, another exception occurred:
+
+self = &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;
+
+    @async_unsafe
+    def ensure_connection(self):
+        """Guarantee that a connection to the database is established."""
+        if self.connection is None:
+            if self.in_atomic_block and self.closed_in_transaction:
+                raise ProgrammingError(
+                    "Cannot open a new connection in an atomic block."
+                )
+            with self.wrap_database_errors:
+&gt;               self.connect()
+
+env\Lib\site-packages\django\db\backends\base\base.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=mydatabase client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'mydatabase', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       psycopg2.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+request = &lt;SubRequest '_django_setup_unittest' for &lt;TestCaseFunction test_approve_after_edited_returns_409&gt;&gt;
+django_db_blocker = &lt;pytest_django.plugin.DjangoDbBlocker object at 0x0000020A4982C350&gt;
+
+    @pytest.fixture(autouse=True, scope="class")
+    def _django_setup_unittest(
+        request: pytest.FixtureRequest,
+        django_db_blocker: DjangoDbBlocker,
+    ) -&gt; Generator[None, None, None]:
+        """Setup a django unittest, internal to pytest-django."""
+        if not django_settings_is_configured() or not is_django_unittest(request):
+            yield
+            return
+    
+        # Fix/patch pytest.
+        # Before pytest 5.4: https://github.com/pytest-dev/pytest/issues/5991
+        # After pytest 5.4: https://github.com/pytest-dev/pytest-django/issues/824
+        from _pytest.unittest import TestCaseFunction
+    
+        original_runtest = TestCaseFunction.runtest
+    
+        def non_debugging_runtest(self) -&gt; None:  # noqa: ANN001
+            self._testcase(result=self)
+    
+        from django.test import SimpleTestCase
+    
+        assert issubclass(request.cls, SimpleTestCase)  # Guarded by 'is_django_unittest'
+        try:
+            TestCaseFunction.runtest = non_debugging_runtest  # type: ignore[method-assign]
+    
+            # Don't set up the DB if the unittest does not require DB.
+            # The `databases` propery seems like the best indicator for that.
+            if request.cls.databases:
+&gt;               request.getfixturevalue("django_db_setup")
+
+env\Lib\site-packages\pytest_django\plugin.py:598: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\pytest_django\fixtures.py:186: in django_db_setup
+    db_cfg = setup_databases(
+env\Lib\site-packages\django\test\utils.py:204: in setup_databases
+    connection.creation.create_test_db(
+env\Lib\site-packages\django\db\backends\base\creation.py:62: in create_test_db
+    self._create_test_db(verbosity, autoclobber, keepdb)
+env\Lib\site-packages\django\db\backends\base\creation.py:202: in _create_test_db
+    with self._nodb_cursor() as cursor:
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:533: in _nodb_cursor
+    with conn.cursor() as cursor:
+         ^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:278: in ensure_connection
+    with self.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+env\Lib\site-packages\django\db\backends\base\base.py:279: in ensure_connection
+    self.connect()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=mydatabase client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'mydatabase', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       django.db.utils.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError</error><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_transitions_to_moderated_and_emits_event" file="app\tests.py" line="36" time="0.001"><error message="failed on setup with &quot;django.db.utils.OperationalError: connection to server at &quot;127.0.0.1&quot;, port 5433 failed: Connection refused (0x0000274D/10061)&#10;&#09;Is the server running on that host and accepting TCP/IP connections?&quot;">self = &lt;DatabaseWrapper vendor='postgresql' alias='__no_db__'&gt;
+
+    @async_unsafe
+    def ensure_connection(self):
+        """Guarantee that a connection to the database is established."""
+        if self.connection is None:
+            if self.in_atomic_block and self.closed_in_transaction:
+                raise ProgrammingError(
+                    "Cannot open a new connection in an atomic block."
+                )
+            with self.wrap_database_errors:
+&gt;               self.connect()
+
+env\Lib\site-packages\django\db\backends\base\base.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=postgres client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'postgres', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       psycopg2.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;
+
+    @contextmanager
+    def _nodb_cursor(self):
+        cursor = None
+        try:
+&gt;           with super()._nodb_cursor() as cursor:
+
+env\Lib\site-packages\django\db\backends\postgresql\base.py:507: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:712: in _nodb_cursor
+    with conn.cursor() as cursor:
+         ^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:278: in ensure_connection
+    with self.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+env\Lib\site-packages\django\db\backends\base\base.py:279: in ensure_connection
+    self.connect()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=postgres client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'postgres', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       django.db.utils.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+During handling of the above exception, another exception occurred:
+
+self = &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;
+
+    @async_unsafe
+    def ensure_connection(self):
+        """Guarantee that a connection to the database is established."""
+        if self.connection is None:
+            if self.in_atomic_block and self.closed_in_transaction:
+                raise ProgrammingError(
+                    "Cannot open a new connection in an atomic block."
+                )
+            with self.wrap_database_errors:
+&gt;               self.connect()
+
+env\Lib\site-packages\django\db\backends\base\base.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=mydatabase client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'mydatabase', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       psycopg2.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+request = &lt;SubRequest '_django_setup_unittest' for &lt;TestCaseFunction test_approve_after_edited_returns_409&gt;&gt;
+django_db_blocker = &lt;pytest_django.plugin.DjangoDbBlocker object at 0x0000020A4982C350&gt;
+
+    @pytest.fixture(autouse=True, scope="class")
+    def _django_setup_unittest(
+        request: pytest.FixtureRequest,
+        django_db_blocker: DjangoDbBlocker,
+    ) -&gt; Generator[None, None, None]:
+        """Setup a django unittest, internal to pytest-django."""
+        if not django_settings_is_configured() or not is_django_unittest(request):
+            yield
+            return
+    
+        # Fix/patch pytest.
+        # Before pytest 5.4: https://github.com/pytest-dev/pytest/issues/5991
+        # After pytest 5.4: https://github.com/pytest-dev/pytest-django/issues/824
+        from _pytest.unittest import TestCaseFunction
+    
+        original_runtest = TestCaseFunction.runtest
+    
+        def non_debugging_runtest(self) -&gt; None:  # noqa: ANN001
+            self._testcase(result=self)
+    
+        from django.test import SimpleTestCase
+    
+        assert issubclass(request.cls, SimpleTestCase)  # Guarded by 'is_django_unittest'
+        try:
+            TestCaseFunction.runtest = non_debugging_runtest  # type: ignore[method-assign]
+    
+            # Don't set up the DB if the unittest does not require DB.
+            # The `databases` propery seems like the best indicator for that.
+            if request.cls.databases:
+&gt;               request.getfixturevalue("django_db_setup")
+
+env\Lib\site-packages\pytest_django\plugin.py:598: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\pytest_django\fixtures.py:186: in django_db_setup
+    db_cfg = setup_databases(
+env\Lib\site-packages\django\test\utils.py:204: in setup_databases
+    connection.creation.create_test_db(
+env\Lib\site-packages\django\db\backends\base\creation.py:62: in create_test_db
+    self._create_test_db(verbosity, autoclobber, keepdb)
+env\Lib\site-packages\django\db\backends\base\creation.py:202: in _create_test_db
+    with self._nodb_cursor() as cursor:
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:533: in _nodb_cursor
+    with conn.cursor() as cursor:
+         ^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:278: in ensure_connection
+    with self.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+env\Lib\site-packages\django\db\backends\base\base.py:279: in ensure_connection
+    self.connect()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=mydatabase client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'mydatabase', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       django.db.utils.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError</error><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_without_sku_returns_409" file="app\tests.py" line="89" time="0.001"><error message="failed on setup with &quot;django.db.utils.OperationalError: connection to server at &quot;127.0.0.1&quot;, port 5433 failed: Connection refused (0x0000274D/10061)&#10;&#09;Is the server running on that host and accepting TCP/IP connections?&quot;">self = &lt;DatabaseWrapper vendor='postgresql' alias='__no_db__'&gt;
+
+    @async_unsafe
+    def ensure_connection(self):
+        """Guarantee that a connection to the database is established."""
+        if self.connection is None:
+            if self.in_atomic_block and self.closed_in_transaction:
+                raise ProgrammingError(
+                    "Cannot open a new connection in an atomic block."
+                )
+            with self.wrap_database_errors:
+&gt;               self.connect()
+
+env\Lib\site-packages\django\db\backends\base\base.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=postgres client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'postgres', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       psycopg2.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;
+
+    @contextmanager
+    def _nodb_cursor(self):
+        cursor = None
+        try:
+&gt;           with super()._nodb_cursor() as cursor:
+
+env\Lib\site-packages\django\db\backends\postgresql\base.py:507: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:712: in _nodb_cursor
+    with conn.cursor() as cursor:
+         ^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:278: in ensure_connection
+    with self.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+env\Lib\site-packages\django\db\backends\base\base.py:279: in ensure_connection
+    self.connect()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=postgres client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'postgres', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       django.db.utils.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+During handling of the above exception, another exception occurred:
+
+self = &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;
+
+    @async_unsafe
+    def ensure_connection(self):
+        """Guarantee that a connection to the database is established."""
+        if self.connection is None:
+            if self.in_atomic_block and self.closed_in_transaction:
+                raise ProgrammingError(
+                    "Cannot open a new connection in an atomic block."
+                )
+            with self.wrap_database_errors:
+&gt;               self.connect()
+
+env\Lib\site-packages\django\db\backends\base\base.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=mydatabase client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'mydatabase', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       psycopg2.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+request = &lt;SubRequest '_django_setup_unittest' for &lt;TestCaseFunction test_approve_after_edited_returns_409&gt;&gt;
+django_db_blocker = &lt;pytest_django.plugin.DjangoDbBlocker object at 0x0000020A4982C350&gt;
+
+    @pytest.fixture(autouse=True, scope="class")
+    def _django_setup_unittest(
+        request: pytest.FixtureRequest,
+        django_db_blocker: DjangoDbBlocker,
+    ) -&gt; Generator[None, None, None]:
+        """Setup a django unittest, internal to pytest-django."""
+        if not django_settings_is_configured() or not is_django_unittest(request):
+            yield
+            return
+    
+        # Fix/patch pytest.
+        # Before pytest 5.4: https://github.com/pytest-dev/pytest/issues/5991
+        # After pytest 5.4: https://github.com/pytest-dev/pytest-django/issues/824
+        from _pytest.unittest import TestCaseFunction
+    
+        original_runtest = TestCaseFunction.runtest
+    
+        def non_debugging_runtest(self) -&gt; None:  # noqa: ANN001
+            self._testcase(result=self)
+    
+        from django.test import SimpleTestCase
+    
+        assert issubclass(request.cls, SimpleTestCase)  # Guarded by 'is_django_unittest'
+        try:
+            TestCaseFunction.runtest = non_debugging_runtest  # type: ignore[method-assign]
+    
+            # Don't set up the DB if the unittest does not require DB.
+            # The `databases` propery seems like the best indicator for that.
+            if request.cls.databases:
+&gt;               request.getfixturevalue("django_db_setup")
+
+env\Lib\site-packages\pytest_django\plugin.py:598: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\pytest_django\fixtures.py:186: in django_db_setup
+    db_cfg = setup_databases(
+env\Lib\site-packages\django\test\utils.py:204: in setup_databases
+    connection.creation.create_test_db(
+env\Lib\site-packages\django\db\backends\base\creation.py:62: in create_test_db
+    self._create_test_db(verbosity, autoclobber, keepdb)
+env\Lib\site-packages\django\db\backends\base\creation.py:202: in _create_test_db
+    with self._nodb_cursor() as cursor:
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:533: in _nodb_cursor
+    with conn.cursor() as cursor:
+         ^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:278: in ensure_connection
+    with self.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+env\Lib\site-packages\django\db\backends\base\base.py:279: in ensure_connection
+    self.connect()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=mydatabase client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'mydatabase', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       django.db.utils.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError</error><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_string_url_works" file="app\tests.py" line="101" time="0.001"><error message="failed on setup with &quot;django.db.utils.OperationalError: connection to server at &quot;127.0.0.1&quot;, port 5433 failed: Connection refused (0x0000274D/10061)&#10;&#09;Is the server running on that host and accepting TCP/IP connections?&quot;">self = &lt;DatabaseWrapper vendor='postgresql' alias='__no_db__'&gt;
+
+    @async_unsafe
+    def ensure_connection(self):
+        """Guarantee that a connection to the database is established."""
+        if self.connection is None:
+            if self.in_atomic_block and self.closed_in_transaction:
+                raise ProgrammingError(
+                    "Cannot open a new connection in an atomic block."
+                )
+            with self.wrap_database_errors:
+&gt;               self.connect()
+
+env\Lib\site-packages\django\db\backends\base\base.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=postgres client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'postgres', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       psycopg2.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;
+
+    @contextmanager
+    def _nodb_cursor(self):
+        cursor = None
+        try:
+&gt;           with super()._nodb_cursor() as cursor:
+
+env\Lib\site-packages\django\db\backends\postgresql\base.py:507: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:712: in _nodb_cursor
+    with conn.cursor() as cursor:
+         ^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:278: in ensure_connection
+    with self.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+env\Lib\site-packages\django\db\backends\base\base.py:279: in ensure_connection
+    self.connect()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=postgres client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'postgres', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       django.db.utils.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+During handling of the above exception, another exception occurred:
+
+self = &lt;DatabaseWrapper vendor='postgresql' alias='default'&gt;
+
+    @async_unsafe
+    def ensure_connection(self):
+        """Guarantee that a connection to the database is established."""
+        if self.connection is None:
+            if self.in_atomic_block and self.closed_in_transaction:
+                raise ProgrammingError(
+                    "Cannot open a new connection in an atomic block."
+                )
+            with self.wrap_database_errors:
+&gt;               self.connect()
+
+env\Lib\site-packages\django\db\backends\base\base.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=mydatabase client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'mydatabase', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       psycopg2.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+request = &lt;SubRequest '_django_setup_unittest' for &lt;TestCaseFunction test_approve_after_edited_returns_409&gt;&gt;
+django_db_blocker = &lt;pytest_django.plugin.DjangoDbBlocker object at 0x0000020A4982C350&gt;
+
+    @pytest.fixture(autouse=True, scope="class")
+    def _django_setup_unittest(
+        request: pytest.FixtureRequest,
+        django_db_blocker: DjangoDbBlocker,
+    ) -&gt; Generator[None, None, None]:
+        """Setup a django unittest, internal to pytest-django."""
+        if not django_settings_is_configured() or not is_django_unittest(request):
+            yield
+            return
+    
+        # Fix/patch pytest.
+        # Before pytest 5.4: https://github.com/pytest-dev/pytest/issues/5991
+        # After pytest 5.4: https://github.com/pytest-dev/pytest-django/issues/824
+        from _pytest.unittest import TestCaseFunction
+    
+        original_runtest = TestCaseFunction.runtest
+    
+        def non_debugging_runtest(self) -&gt; None:  # noqa: ANN001
+            self._testcase(result=self)
+    
+        from django.test import SimpleTestCase
+    
+        assert issubclass(request.cls, SimpleTestCase)  # Guarded by 'is_django_unittest'
+        try:
+            TestCaseFunction.runtest = non_debugging_runtest  # type: ignore[method-assign]
+    
+            # Don't set up the DB if the unittest does not require DB.
+            # The `databases` propery seems like the best indicator for that.
+            if request.cls.databases:
+&gt;               request.getfixturevalue("django_db_setup")
+
+env\Lib\site-packages\pytest_django\plugin.py:598: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+env\Lib\site-packages\pytest_django\fixtures.py:186: in django_db_setup
+    db_cfg = setup_databases(
+env\Lib\site-packages\django\test\utils.py:204: in setup_databases
+    connection.creation.create_test_db(
+env\Lib\site-packages\django\db\backends\base\creation.py:62: in create_test_db
+    self._create_test_db(verbosity, autoclobber, keepdb)
+env\Lib\site-packages\django\db\backends\base\creation.py:202: in _create_test_db
+    with self._nodb_cursor() as cursor:
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:533: in _nodb_cursor
+    with conn.cursor() as cursor:
+         ^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:278: in ensure_connection
+    with self.wrap_database_errors:
+env\Lib\site-packages\django\db\utils.py:91: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+env\Lib\site-packages\django\db\backends\base\base.py:279: in ensure_connection
+    self.connect()
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\base\base.py:256: in connect
+    self.connection = self.get_new_connection(conn_params)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+env\Lib\site-packages\django\db\backends\postgresql\base.py:332: in get_new_connection
+    connection = self.Database.connect(**conn_params)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dsn = 'dbname=mydatabase client_encoding=UTF8 user=myuser password=mypassword host=127.0.0.1 port=5433'
+connection_factory = None, cursor_factory = &lt;class 'psycopg2.extensions.cursor'&gt;
+kwargs = {'client_encoding': 'UTF8', 'dbname': 'mydatabase', 'host': '127.0.0.1', 'password': 'mypassword', ...}
+kwasync = {}
+
+    def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
+        """
+        Create a new database connection.
+    
+        The connection parameters can be specified as a string:
+    
+            conn = psycopg2.connect("dbname=test user=postgres password=secret")
+    
+        or using a set of keyword arguments:
+    
+            conn = psycopg2.connect(database="test", user="postgres", password="secret")
+    
+        Or as a mix of both. The basic connection parameters are:
+    
+        - *dbname*: the database name
+        - *database*: the database name (only as keyword argument)
+        - *user*: user name used to authenticate
+        - *password*: password used to authenticate
+        - *host*: database host address (defaults to UNIX socket if not provided)
+        - *port*: connection port number (defaults to 5432 if not provided)
+    
+        Using the *connection_factory* parameter a different class or connections
+        factory can be specified. It should be a callable object taking a dsn
+        argument.
+    
+        Using the *cursor_factory* parameter, a new default cursor factory will be
+        used by cursor().
+    
+        Using *async*=True an asynchronous connection will be created. *async_* is
+        a valid alias (for Python versions where ``async`` is a keyword).
+    
+        Any other keyword parameter will be passed to the underlying client
+        library: the list of supported parameters depends on the library version.
+    
+        """
+        kwasync = {}
+        if 'async' in kwargs:
+            kwasync['async'] = kwargs.pop('async')
+        if 'async_' in kwargs:
+            kwasync['async_'] = kwargs.pop('async_')
+    
+        dsn = _ext.make_dsn(dsn, **kwargs)
+&gt;       conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       django.db.utils.OperationalError: connection to server at "127.0.0.1", port 5433 failed: Connection refused (0x0000274D/10061)
+E       	Is the server running on that host and accepting TCP/IP connections?
+
+env\Lib\site-packages\psycopg2\__init__.py:135: OperationalError</error><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>
