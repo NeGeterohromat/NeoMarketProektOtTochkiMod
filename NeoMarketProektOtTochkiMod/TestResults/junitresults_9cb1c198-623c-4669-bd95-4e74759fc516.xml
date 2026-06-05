@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="5" time="5.091" timestamp="2026-06-05T17:54:54.827280+05:00" hostname="WIN-T9HMN0FRTB7"><testcase classname="app.tests.ApproveTicketTests" name="test_approve_after_edited_returns_409" file="app\tests.py" line="77" time="1.346"><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Conflict: /api/v1/tickets/feeb560f-3a6f-415d-9ced-2de54cb37e7d/approve
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_others_card_returns_403" file="app\tests.py" line="65" time="0.834"><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Forbidden: /api/v1/tickets/a2843c6e-005c-496f-98ac-a35382ca8b3a/approve
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_transitions_to_moderated_and_emits_event" file="app\tests.py" line="36" time="0.855"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_approve_without_sku_returns_409" file="app\tests.py" line="89" time="0.858"><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Conflict: /api/v1/tickets/1e734f26-cf7c-4ae4-a00e-29acb1baebe7/approve
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="app.tests.ApproveTicketTests" name="test_string_url_works" file="app\tests.py" line="101" time="0.905"><failure message="AssertionError: 405 != 200">self = &lt;app.tests.ApproveTicketTests testMethod=test_string_url_works&gt;
+mock_post_event = &lt;MagicMock name='post' id='1872837852048'&gt;
+mock_get_product = &lt;MagicMock name='get' id='1872837842000'&gt;
+
+    @patch('app.services.requests.get')
+    @patch('app.services.requests.post')
+    def test_string_url_works(self, mock_post_event, mock_get_product):
+        mock_get_product.return_value.status_code = 200
+        mock_get_product.return_value.json.return_value = {"skus": [{"id": str(uuid.uuid4()), "price": 1000}]}
+        mock_post_event.return_value.status_code = 204
+        url = f'/api/v1/tickets/{self.moderation.id}/approve'
+        response = self.client.get(url)
+    
+&gt;       self.assertEqual(response.status_code, status.HTTP_200_OK)
+E       AssertionError: 405 != 200
+
+app\tests.py:111: AssertionError</failure><system-out>--------------------------------- Captured Log ---------------------------------
+WARNING  django.request:log.py:253 Method Not Allowed: /api/v1/tickets/87660d08-98e3-4ebc-b886-f061370fe679/approve
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>

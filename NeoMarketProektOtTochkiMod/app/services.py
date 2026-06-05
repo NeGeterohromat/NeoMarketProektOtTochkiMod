@@ -37,7 +37,7 @@ def approve_ticket_service(ticket_id: str, moderator, comment: str = ""):
     }
 
     # 6. Проверка наличия SKU через B2B Public Catalog
-    product_url = f"{b2b_url}/api/v1/public/products/{moderation.product_id}"
+    product_url = f"{b2b_url}/api/v1/products/{moderation.product_id}"
     response = requests.get(product_url, headers=headers, timeout=5)
     
     if response.status_code == 200:
