@@ -50,7 +50,7 @@ def approve_ticket_service(ticket_id: str, moderator, comment: str = ""):
 
     # 7 & 8. Атомарное обновление статуса и очистка field_reports
     with transaction.atomic():
-        moderation.status = ProductModeration.StatusChoices.MODERATED
+        moderation.status = ProductModeration.StatusChoices.APPROVED
         moderation.date_moderation = timezone.now()
         moderation.moderator_comment = comment if comment else None
         moderation.blocking_reason = None
@@ -77,6 +77,24 @@ def approve_ticket_service(ticket_id: str, moderator, comment: str = ""):
     if event_response.status_code not in (200, 201, 204):
         # 10. Если B2B вернул ошибку, мы выбрасываем исключение. 
         # Статус в БД уже MODERATED, но модератор увидит 500 и сможет повторить запрос (идемпотентность спасет).
+        moderation.status = ProductModeration.StatusChoices.IN_REVIEW
+        moderation.save()
         raise B2BEventError("Failed to notify B2B service about MODERATED event")
 
     return moderation
+
+def get_kind(product_id: str) -> str:
+    b2b_url = getattr(settings, 'B2B_URL', 'http://b2b:8000')
+    headers = {
+        'X-Service-Key': getattr(settings, 'MOD_TO_B2B_KEY', 'default-service-key'),
+        'Content-Type': 'application/json'
+    }
+    url = f"{b2b_url}/api/v1/products/{product_id}"
+    response = requests.get(url, headers=headers, timeout=5)
+
+    #не страшно
+    if response.status_code != 200:
+        return "CREATE"
+
+    return response.json()['status']
+
