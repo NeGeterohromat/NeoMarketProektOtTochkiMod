@@ -39,14 +39,14 @@ class ApproveTicketTests(APITestCase):
     def test_approve_transitions_to_moderated_and_emits_event(self, mock_post_event, mock_get_product):
         # Happy path
         mock_get_product.return_value.status_code = 200
-        mock_get_product.return_value.json.return_value = {"skus": [{"id": str(uuid.uuid4()), "price": 1000}]}
+        mock_get_product.return_value.json.side_effect = [{"skus": [{"id": str(uuid.uuid4()), "price": 1000}]},{'status':'CREATED'}]
         mock_post_event.return_value.status_code = 204
 
         response = self.client.post(self.url, {"comment": "Товар соответствует требованиям"}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.moderation.refresh_from_db()
-        self.assertEqual(self.moderation.status, ProductModeration.StatusChoices.MODERATED)
+        self.assertEqual(self.moderation.status, ProductModeration.StatusChoices.APPROVED)
         self.assertEqual(self.moderation.moderator_comment, "Товар соответствует требованиям")
         self.assertIsNone(self.moderation.blocking_reason)
         
@@ -103,7 +103,7 @@ class ApproveTicketTests(APITestCase):
     @patch('app.services.requests.post')
     def test_string_url_works(self, mock_post_event, mock_get_product):
         mock_get_product.return_value.status_code = 200
-        mock_get_product.return_value.json.return_value = {"skus": [{"id": str(uuid.uuid4()), "price": 1000}]}
+        mock_get_product.return_value.json.side_effect = [{"skus": [{"id": str(uuid.uuid4()), "price": 1000}]},{'status':'CREATED'}]
         mock_post_event.return_value.status_code = 204
         url = f'/api/v1/tickets/{self.moderation.id}/approve'
         response = self.client.post(url,{"comment": "Товар соответствует требованиям"}, format='json')

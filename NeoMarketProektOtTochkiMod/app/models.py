@@ -39,7 +39,7 @@ class ProductModeration(models.Model):
     class StatusChoices(models.TextChoices):
         PENDING = 'PENDING', 'Ожидает'
         IN_REVIEW = 'IN_REVIEW', 'В работе'
-        MODERATED = 'MODERATED', 'Промодерировано'
+        APPROVED = 'APPROVED', 'Промодерировано'
         BLOCKED = 'BLOCKED', 'Заблокировано'
         HARD_BLOCKED = 'HARD_BLOCKED', 'Жесткая блокировка'
 
