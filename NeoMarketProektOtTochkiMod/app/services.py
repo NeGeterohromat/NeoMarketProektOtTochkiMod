@@ -58,43 +58,28 @@ def approve_ticket_service(ticket_id: str, moderator, comment: str = ""):
         
         ProductModerationFieldReport.objects.filter(product_moderation=moderation).delete()
 
-    # 9. Отправка события в B2B
-    event_payload = {
-        "idempotency_key": str(moderation.id),
-        "product_id": str(moderation.product_id),
-        "event_type": "MODERATED",
-        "moderator_id": str(moderator.id),
-        "moderator_comment": comment if comment else "",
-        "blocking_reason_id": None,
-        "hard_block": False,
-        "field_reports": [],
-        "occurred_at": timezone.now().isoformat()
-    }
+        # 9. Отправка события в B2B
+        event_payload = {
+            "idempotency_key": str(moderation.id),
+            "product_id": str(moderation.product_id),
+            "event_type": "MODERATED",
+            "moderator_id": str(moderator.id),
+            "moderator_comment": comment if comment else "",
+            "blocking_reason_id": None,
+            "hard_block": False,
+            "field_reports": [],
+            "occurred_at": timezone.now().isoformat()
+        }
     
-    events_url = f"{b2b_url}/api/v1/moderation/events"
-    event_response = requests.post(events_url, json=event_payload, headers=headers, timeout=5)
+        events_url = f"{b2b_url}/api/v1/moderation/events"
+        event_response = requests.post(events_url, json=event_payload, headers=headers, timeout=5)
     
-    if event_response.status_code not in (200, 201, 204):
-        # 10. Если B2B вернул ошибку, мы выбрасываем исключение. 
-        # Статус в БД уже MODERATED, но модератор увидит 500 и сможет повторить запрос (идемпотентность спасет).
-        moderation.status = ProductModeration.StatusChoices.IN_REVIEW
-        moderation.save()
-        raise B2BEventError("Failed to notify B2B service about MODERATED event")
+        if event_response.status_code not in (200, 201, 204):
+            # 10. Если B2B вернул ошибку, мы выбрасываем исключение. 
+            # Статус в БД уже MODERATED, но модератор увидит 500 и сможет повторить запрос (идемпотентность спасет).
+            moderation.status = ProductModeration.StatusChoices.IN_REVIEW
+            moderation.save()
+            raise B2BEventError("Failed to notify B2B service about MODERATED event")
 
     return moderation
-
-def get_kind(product_id: str) -> str:
-    b2b_url = getattr(settings, 'B2B_URL', 'http://b2b:8000')
-    headers = {
-        'X-Service-Key': getattr(settings, 'MOD_TO_B2B_KEY', 'default-service-key'),
-        'Content-Type': 'application/json'
-    }
-    url = f"{b2b_url}/api/v1/products/{product_id}"
-    response = requests.get(url, headers=headers, timeout=5)
-
-    #не страшно
-    if response.status_code != 200:
-        return "CREATE"
-
-    return response.json()['status']
 

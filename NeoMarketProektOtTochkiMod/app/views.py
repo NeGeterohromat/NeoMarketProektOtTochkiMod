@@ -50,7 +50,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .serializers import ApproveTicketSerializer
-from .services import approve_ticket_service, get_kind
+from .services import approve_ticket_service
 from .exceptions import (
     error_response,
     ModerationNotFoundError,
@@ -89,7 +89,7 @@ class ApproveProductView(APIView):
                 "product_id": str(moderation.product_id),
                 "seller_id": str(moderation.seller_id),
                 "category_id": moderation.json_after.get('category_id') if moderation.json_after else None,
-                "kind": get_kind(moderation.product_id),
+                "kind": "CREATE" if moderation.json_before is None else "EDIT",
                 "status": moderation.status,
                 "queue_priority": moderation.queue_priority,
                 "assigned_moderator_id": str(moderation.moderator_id.id) if moderation.moderator_id else None,
