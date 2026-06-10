@@ -1,6 +1,7 @@
 *.sln
 *.user
 .vs/
+*/TestResults/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
