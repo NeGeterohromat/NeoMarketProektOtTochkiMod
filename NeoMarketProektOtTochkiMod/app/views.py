@@ -49,8 +49,9 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .serializers import ApproveTicketSerializer
-from .services import approve_ticket_service
+from .serializers import ApproveTicketSerializer, BlockTicketSerializer, B2BEventSerializer
+from .services import approve_ticket_service, block_ticket_service, handle_b2b_event_service
+from .models import ProductModeration
 from .exceptions import (
     error_response,
     ModerationNotFoundError,
@@ -109,3 +110,79 @@ class ApproveProductView(APIView):
             return error_response("CONFLICT", str(e), status.HTTP_409_CONFLICT)
         except B2BEventError as e:
             return error_response("B2B_ERROR", str(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class BlockTicketView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, ticket_id):
+        serializer = BlockTicketSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            moderation = block_ticket_service(
+                ticket_id=ticket_id,
+                moderator=request.user,
+                blocking_reason_ids=serializer.validated_data.get('blocking_reason_ids', []),
+                comment=serializer.validated_data.get('comment', ''),
+                field_reports=serializer.validated_data.get('field_reports', [])
+            )
+            
+            response_data = {
+                "id": str(moderation.id),
+                "product_id": str(moderation.product_id),
+                "seller_id": str(moderation.seller_id),
+                "category_id": moderation.json_after.get('category_id') if moderation.json_after else None,
+                "kind": "CREATE" if moderation.json_before is None else "EDIT",
+                "status": moderation.status,
+                "queue_priority": moderation.queue_priority,
+                "assigned_moderator_id": str(moderation.moderator_id.id) if moderation.moderator_id else None,
+                "claimed_at": moderation.date_updated.isoformat() if moderation.date_updated else None,
+                "claim_expires_at": None,
+                "decision_at": moderation.date_moderation.isoformat() if moderation.date_moderation else None,
+                "created_at": moderation.date_created.isoformat(),
+                "updated_at": moderation.date_updated.isoformat()
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        except ModerationNotFoundError:
+            return error_response("NOT_FOUND", "Product not found in moderation queue", status.HTTP_404_NOT_FOUND)
+        except ModerationNotAssignedError as e:
+            return error_response("FORBIDDEN", str(e), status.HTTP_403_FORBIDDEN)
+        except ModerationInvalidStatusError as e:
+            return error_response("CONFLICT", str(e), status.HTTP_409_CONFLICT)
+        except B2BEventError as e:
+            return error_response("B2B_ERROR", str(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return error_response("BAD_REQUEST", str(e), status.HTTP_400_BAD_REQUEST)
+
+
+class B2BEventReceiverView(APIView):
+    # События от B2B защищены X-Service-Key на уровне middleware/gateway, а не JWT
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = B2BEventSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        handle_b2b_event_service(serializer.validated_data)
+        
+        return Response(status=status.HTTP_202_ACCEPTED)
+
+class UpdateTicketView(APIView):
+    """
+    Эндпоинт для проверки требования any_modify_on_hard_blocked_returns_403.
+    Любые попытки модификации HARD_BLOCKED карточки возвращают 403.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, ticket_id):
+        try:
+            moderation = ProductModeration.objects.get(id=ticket_id)
+            if moderation.status == ProductModeration.StatusChoices.HARD_BLOCKED:
+                return error_response("FORBIDDEN", "Product is permanently blocked and cannot be modified", status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Modified"}, status=status.HTTP_200_OK)
+        except ProductModeration.DoesNotExist:
+            return error_response("NOT_FOUND", "Ticket not found", status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, ticket_id):
+        return self.post(request, ticket_id)

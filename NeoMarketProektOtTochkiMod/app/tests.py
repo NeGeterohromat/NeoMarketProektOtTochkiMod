@@ -109,3 +109,111 @@ class ApproveTicketTests(APITestCase):
         response = self.client.post(url,{"comment": "Товар соответствует требованиям"}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+class HardBlockFlowTests(APITestCase):
+    def setUp(self):
+        self.moderator = User.objects.create_user(username='moderator', password='pass')
+        self.reason = ProductBlockingReason.objects.create(
+            id=uuid.uuid4(),
+            title="Контрафактный товар",
+            hard_block=True
+        )
+        self.ticket = ProductModeration.objects.create(
+            id=uuid.uuid4(),
+            product_id=uuid.uuid4(),
+            seller_id=uuid.uuid4(),
+            status=ProductModeration.StatusChoices.IN_REVIEW,
+            queue_priority=3,
+            json_after={"category_id": str(uuid.uuid4())},
+            moderator_id=self.moderator
+        )
+        self.client.force_authenticate(user=self.moderator)
+
+    @patch('app.services.requests.post')
+    def test_hard_block_transitions_to_terminal_and_emits_event(self, mock_post):
+        """Happy path: статус переходит в HARD_BLOCKED, событие уходит в B2B."""
+        mock_post.return_value.status_code = 204
+
+        url = f"/api/v1/tickets/{self.ticket.id}/block/"
+        data = {
+            "blocking_reason_ids": [str(self.reason.id)],
+            "comment": "Hard block test"
+        }
+        response = self.client.post(url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.status, ProductModeration.StatusChoices.HARD_BLOCKED)
+        
+        self.assertTrue(mock_post.called)
+        call_args = mock_post.call_args
+        self.assertIn("/api/v1/moderation/events", call_args[0][0])
+        payload = call_args[1]['json']
+        self.assertEqual(payload['event_type'], 'BLOCKED')
+
+    @patch('app.services.requests.post')
+    def test_hard_block_event_carries_hard_block_true(self, mock_post):
+        """Флаг hard_block в событии строго равен True."""
+        mock_post.return_value.status_code = 204
+        
+        url = f"/api/v1/tickets/{self.ticket.id}/block/"
+        data = {
+            "blocking_reason_ids": [str(self.reason.id)],
+            "comment": "Hard block test"
+        }
+        self.client.post(url, data, format='json')
+        
+        call_args = mock_post.call_args
+        payload = call_args[1]['json']
+        self.assertTrue(payload['hard_block'])
+
+    def test_any_modify_on_hard_blocked_returns_403(self):
+        """Защита терминальности: любые POST/PUT на карточку возвращают 403."""
+        self.ticket.status = ProductModeration.StatusChoices.HARD_BLOCKED
+        self.ticket.save()
+        
+        url = f"/api/v1/tickets/{self.ticket.id}/"
+        response = self.client.post(url, {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+        response = self.client.put(url, {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_edited_event_on_hard_blocked_is_ignored(self):
+        """Событие EDITED от B2B не выводит товар из терминального статуса."""
+        self.ticket.status = ProductModeration.StatusChoices.HARD_BLOCKED
+        self.ticket.save()
+        
+        url = "/api/v1/b2b/events/"
+        data = {
+            "event_type": "PRODUCT_EDITED",
+            "idempotency_key": str(uuid.uuid4()),
+            "occurred_at": "2026-06-10T10:00:00Z",
+            "payload": {
+                "product_id": str(self.ticket.product_id)
+            }
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.status, ProductModeration.StatusChoices.HARD_BLOCKED)
+
+    def test_deleted_event_removes_hard_blocked(self):
+        """Событие DELETED удаляет запись из Moderation."""
+        self.ticket.status = ProductModeration.StatusChoices.HARD_BLOCKED
+        self.ticket.save()
+        
+        url = "/api/v1/b2b/events/"
+        data = {
+            "event_type": "PRODUCT_DELETED",
+            "idempotency_key": str(uuid.uuid4()),
+            "occurred_at": "2026-06-10T10:00:00Z",
+            "payload": {
+                "product_id": str(self.ticket.product_id)
+            }
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        
+        self.assertFalse(ProductModeration.objects.filter(id=self.ticket.id).exists())
