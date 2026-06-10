@@ -44,21 +44,27 @@ Definition of views.
 #         }
 #     )
 
+from csv import Error
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.conf import settings
 
 from .serializers import ApproveTicketSerializer, BlockTicketSerializer, B2BEventSerializer
 from .services import approve_ticket_service, block_ticket_service, handle_b2b_event_service
 from .models import ProductModeration
+from .authentication import ServiceKeyAuthentication
 from .exceptions import (
     error_response,
     ModerationNotFoundError,
     ModerationNotAssignedError,
     ModerationInvalidStatusError,
     ProductHasNoSkusError,
-    B2BEventError
+    B2BEventError,
+    DoubleB2BEventError,
+    UnauthorizedRequestError,
+    B2BUnavailableError
 )
 
 class CreateEventAPIView(APIView):
@@ -159,14 +165,22 @@ class BlockTicketView(APIView):
 class B2BEventReceiverView(APIView):
     # События от B2B защищены X-Service-Key на уровне middleware/gateway, а не JWT
     permission_classes = []
+    authentication_classes = [ServiceKeyAuthentication]
 
     def post(self, request, *args, **kwargs):
         serializer = B2BEventSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        handle_b2b_event_service(serializer.validated_data)
+        try:
+            handle_b2b_event_service(serializer.validated_data)
         
-        return Response(status=status.HTTP_202_ACCEPTED)
+            return Response(status=status.HTTP_202_ACCEPTED)
+        except DoubleB2BEventError as e:
+            return error_response('DOUBLE_EVENT','DOUBLE_EVENT',status.HTTP_409_CONFLICT)
+        except B2BUnavailableError as e:
+            return error_response('B2BUnavailable','B2BUnavailable',status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception as e:
+            return error_response("BAD_REQUEST", str(e), status.HTTP_400_BAD_REQUEST)
 
 class UpdateTicketView(APIView):
     """

@@ -25,6 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 B2B_URL = env('B2B_URL')
 MOD_TO_B2B_KEY = env('MOD_TO_B2B_KEY')
+B2B_TO_MOD_KEY = env('B2B_TO_MOD_KEY')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/

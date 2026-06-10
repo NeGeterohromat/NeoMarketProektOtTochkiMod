@@ -9,7 +9,9 @@ from .exceptions import (
     ModerationNotAssignedError,
     ModerationInvalidStatusError,
     ProductHasNoSkusError,
-    B2BEventError
+    B2BEventError,
+    DoubleB2BEventError,
+    B2BUnavailableError
 )
 
 def approve_ticket_service(ticket_id: str, moderator, comment: str = ""):
@@ -195,13 +197,61 @@ def handle_b2b_event_service(event_data: dict):
     try:
         moderation = ProductModeration.objects.get(product_id=product_id)
     except ProductModeration.DoesNotExist:
+        if event_type != 'PRODUCT_CREATED':
+            return
+
+        create_order(product_id)
         return
+
+    # событие CREATED но оно уже было в таблице
+    if event_type == 'PRODUCT_CREATED':
+        raise DoubleB2BEventError()
+
 
     if event_type == 'PRODUCT_EDITED':
         # edited_event_on_hard_blocked_is_ignored
+        # Игнорируем идемпотентно
         if moderation.status == ProductModeration.StatusChoices.HARD_BLOCKED:
-            return # Игнорируем идемпотентно
+           return
+        update_ticket(moderation)
             
     elif event_type == 'PRODUCT_DELETED':
         # deleted_event_removes_hard_blocked
         moderation.delete()
+
+def get_order_data(product_id):
+    b2b_url = getattr(settings, 'B2B_URL', 'http://b2b:8000')
+    headers = {
+        'X-Service-Key': getattr(settings, 'MOD_TO_B2B_KEY', 'default-service-key'),
+        'Content-Type': 'application/json'
+    }
+    url = f"{b2b_url}/api/v1/products/{product_id}"
+    response = requests.get(url, headers=headers, timeout=5)
+
+    if response.status_code != 200:
+        raise B2BUnavailableError()
+
+    return response.json()
+
+def create_order(product_id):
+    response = get_order_data(product_id)
+
+    ProductModeration.objects.create(
+            product_id=product_id,
+            seller_id=response['seller_id'],
+            status=ProductModeration.StatusChoices.PENDING,
+            queue_priority=2,
+            json_after=response # По контракту запрос из Mod приходит без полей cost_price и reserved_quantity
+            )
+
+def update_ticket(mod):
+    response=get_order_data(mod.product_id)
+    
+    with transaction.atomic():
+        mod.json_before=mod.json_after
+        mod.json_after=response
+        mod.status=ProductModeration.StatusChoices.PENDING
+        mod.moderator_id=None
+        mod.save() # date_updated имеет флаг auto_now=True
+
+        ProductModerationFieldReport.objects.filter(product_moderation=mod).delete()
