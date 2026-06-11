@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from django.urls import reverse
+from django.conf import settings
 
 from .models import ProductModeration, ProductBlockingReason
 
@@ -217,3 +218,158 @@ class HardBlockFlowTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         
         self.assertFalse(ProductModeration.objects.filter(id=self.ticket.id).exists())
+
+class B2BEventFlowTests(APITestCase):
+    """
+    Тесты канонического флоу "приём событий товара" от B2B.
+    """
+    def setUp(self):
+        self.url = reverse('b2b-events')
+        # Заголовок межсервисной авторизации согласно moderation.yaml
+        self.auth_headers = {'X-Service-Key': settings.B2B_TO_MOD_KEY}
+        self.product_id = uuid.uuid4()
+        self.seller_id = uuid.uuid4()
+        
+    def _mock_b2b_product_response(self):
+        """Возвращает мок ответа от B2B Public Catalog."""
+        return {
+            'seller_id': str(self.seller_id),
+            'category_id': str(uuid.uuid4()),
+            'status': 'MODERATED',
+            'skus': [{'id': str(uuid.uuid4())}]
+        }
+
+    @patch('app.services.requests.get')
+    def test_created_pending(self, mock_get):
+        """created_pending — событие CREATED создаёт карточку в PENDING."""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = self._mock_b2b_product_response()
+        
+        payload = {
+            "event_type": "PRODUCT_CREATED",
+            "idempotency_key": str(uuid.uuid4()),
+            "occurred_at": "2026-06-11T10:00:00Z",
+            "payload": {
+                "product_id": str(self.product_id),
+                "seller_id": str(self.seller_id),
+                "json_after": {"title": "New Product"}
+            }
+        }
+        
+        response = self.client.post(self.url, payload, format='json', headers=self.auth_headers)
+        self.assertEqual(response.status_code, 202)
+        
+        # Проверяем, что карточка создана в статусе PENDING
+        self.assertTrue(
+            ProductModeration.objects.filter(
+                product_id=self.product_id, 
+                status=ProductModeration.StatusChoices.PENDING
+            ).exists()
+        )
+
+    @patch('app.services.requests.get')
+    def test_edited_returns_to_review(self, mock_get):
+        """edited_returns_to_review — EDITED после MODERATED/BLOCKED возвращает карточку в очередь (PENDING)."""
+        # Создаем карточку в статусе APPROVED (аналог MODERATED)
+        ProductModeration.objects.create(
+            product_id=self.product_id,
+            seller_id=self.seller_id,
+            status=ProductModeration.StatusChoices.APPROVED,
+            queue_priority=3,
+            json_after={"title": "Old Title"}
+        )
+        
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = self._mock_b2b_product_response()
+        
+        payload = {
+            "event_type": "PRODUCT_EDITED",
+            "idempotency_key": str(uuid.uuid4()),
+            "occurred_at": "2026-06-11T10:00:00Z",
+            "payload": {
+                "product_id": str(self.product_id),
+                "seller_id": str(self.seller_id),
+                "json_before": {"title": "Old Title"},
+                "json_after": {"title": "New Title"}
+            }
+        }
+        
+        response = self.client.post(self.url, payload, format='json', headers=self.auth_headers)
+        self.assertEqual(response.status_code, 202)
+        
+        mod = ProductModeration.objects.get(product_id=self.product_id)
+        self.assertEqual(mod.status, ProductModeration.StatusChoices.PENDING)
+        # Несуществующее (явно переданное при создании) поле title перенеслось в json_before, а json_after содержит ответ от b2b
+        self.assertTrue('title' in mod.json_before)
+        self.assertFalse('title' in mod.json_after)
+
+    def test_deleted_archived(self):
+        """deleted_archived — DELETED уводит карточку из очереди (удаляет из БД)."""
+        ProductModeration.objects.create(
+            product_id=self.product_id,
+            seller_id=self.seller_id,
+            status=ProductModeration.StatusChoices.PENDING,
+            queue_priority=3,
+            json_after={}
+        )
+        
+        payload = {
+            "event_type": "PRODUCT_DELETED",
+            "idempotency_key": str(uuid.uuid4()),
+            "occurred_at": "2026-06-11T10:00:00Z",
+            "payload": {
+                "product_id": str(self.product_id)
+            }
+        }
+        
+        response = self.client.post(self.url, payload, format='json', headers=self.auth_headers)
+        self.assertEqual(response.status_code, 202)
+        
+        # Карточка должна быть удалена
+        self.assertFalse(ProductModeration.objects.filter(product_id=self.product_id).exists())
+
+    @patch('app.services.requests.get')
+    def test_duplicate_event_no_side_effects(self, mock_get):
+        """duplicate_event_no_side_effects — повторное событие с тем же ключом -> 202 без побочных эффектов."""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = self._mock_b2b_product_response()
+        
+        idem_key = str(uuid.uuid4())
+        payload = {
+            "event_type": "PRODUCT_CREATED",
+            "idempotency_key": idem_key,
+            "occurred_at": "2026-06-11T10:00:00Z",
+            "payload": {
+                "product_id": str(self.product_id),
+                "seller_id": str(self.seller_id),
+                "json_after": {"title": "Test"}
+            }
+        }
+        
+        # Первый запрос
+        response1 = self.client.post(self.url, payload, format='json', headers=self.auth_headers)
+        self.assertEqual(response1.status_code, 202)
+        
+        # Повторный запрос с тем же idempotency_key
+        response2 = self.client.post(self.url, payload, format='json', headers=self.auth_headers)
+        
+        # По заданию: повторное событие должно возвращать 200/202 без побочных эффектов.
+        # Ваш код сейчас возвращает 409 (DoubleB2BEventError). 
+        # Тест написан на корректное по заданию поведение.
+        self.assertIn(response2.status_code, [200, 202])
+        self.assertEqual(ProductModeration.objects.filter(product_id=self.product_id).count(), 1)
+
+    def test_missing_service_header_401(self):
+        """missing_service_header_401 — запрос без межсервисного заголовка -> 401."""
+        payload = {
+            "event_type": "PRODUCT_CREATED",
+            "idempotency_key": str(uuid.uuid4()),
+            "occurred_at": "2026-06-11T10:00:00Z",
+            "payload": {"product_id": str(self.product_id)}
+        }
+        
+        # Намеренно не передаем заголовок X-Service-Key
+        response = self.client.post(self.url, payload, format='json')
+        
+        # Должен вернуться 401 Unauthorized
+        self.assertEqual(response.status_code, 401)

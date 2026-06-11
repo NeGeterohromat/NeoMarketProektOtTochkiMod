@@ -32,3 +32,9 @@ class ProductHasNoSkusError(Exception):
 
 class B2BEventError(Exception):
     pass
+
+class UnauthorizedRequestError(Exception):
+    pass
+
+class DoubleB2BEventError(Exception):
+    pass
