@@ -13,9 +13,7 @@ class ServiceKeyAuthentication(BaseAuthentication):
         if auth_key != valid_key:
             raise exceptions.AuthenticationFailed('Invalid Service Key')
 
-        # Возвращаем кастомный флаг в кортеже Auth, чтобы отличать модератора
-        # Вместо None передаем словарь или объект, указывающий на сервис
-        return (None, {'is_moderator_service': True})
+        return (ServiceUser(), None)
 
     def authenticate_header(self, request):
         """
@@ -23,3 +21,19 @@ class ServiceKeyAuthentication(BaseAuthentication):
         Если этот метод возвращает непустую строку, DRF вернёт 401 вместо 403.
         """
         return 'X-Service-Key'
+
+class ServiceUser:
+    """Фиктивный класс пользователя для сервисной аутентификации"""
+    def __init__(
+        self, 
+        username: str = "b2b_service", 
+        auth_data: dict = None
+    ):
+        self.username = username
+        
+        # Эти два атрибута критически важны для DRF!
+        self.is_authenticated = True
+        self.is_anonymous = False
+
+    def __str__(self):
+        return self.username

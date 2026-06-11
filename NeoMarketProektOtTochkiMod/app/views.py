@@ -164,7 +164,7 @@ class BlockTicketView(APIView):
 
 class B2BEventReceiverView(APIView):
     # События от B2B защищены X-Service-Key на уровне middleware/gateway, а не JWT
-    permission_classes = []
+    permission_classes = [IsAuthenticated]
     authentication_classes = [ServiceKeyAuthentication]
 
     def post(self, request, *args, **kwargs):
@@ -173,7 +173,6 @@ class B2BEventReceiverView(APIView):
         
         try:
             handle_b2b_event_service(serializer.validated_data)
-        
             return Response(status=status.HTTP_202_ACCEPTED)
         except DoubleB2BEventError as e:
             return error_response('DOUBLE_EVENT','DOUBLE_EVENT',status.HTTP_409_CONFLICT)

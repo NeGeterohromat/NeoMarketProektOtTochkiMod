@@ -2,6 +2,7 @@ import requests
 from django.utils import timezone
 from django.conf import settings
 from django.db import transaction
+from django.core.cache import cache
 
 from .models import ProductModeration, ProductModerationFieldReport, ProductBlockingReason
 from .exceptions import (
@@ -188,10 +189,16 @@ def handle_b2b_event_service(event_data: dict):
     Обработка входящих событий от B2B (PRODUCT_EDITED, PRODUCT_DELETED).
     """
     event_type = event_data.get('event_type')
+    idempotency_key = event_data.get('idempotency_key')
     payload = event_data.get('payload', {})
     product_id = payload.get('product_id')
     
     if not product_id:
+        return
+
+    # Проверка идемпотентности
+    if check_idempotency(idempotency_key):
+        # Дубликат события - возвращаемся без побочных эффектов
         return
 
     try:
@@ -255,3 +262,28 @@ def update_ticket(mod):
         mod.save() # date_updated имеет флаг auto_now=True
 
         ProductModerationFieldReport.objects.filter(product_moderation=mod).delete()
+
+def check_idempotency(idempotency_key: str) -> bool:
+    """
+    Проверяет идемпотентность события по ключу.
+    
+    Returns:
+        True - если ключ уже был обработан (дубликат)
+        False - если ключ новый
+    
+    Side effect: сохраняет ключ в кэш с TTL из настроек
+    """
+    if not idempotency_key:
+        return False
+    
+    cache_key = f"idempotency:{idempotency_key}"
+    
+    # Проверяем, есть ли уже такой ключ в кэше
+    if cache.get(cache_key):
+        return True  # Дубликат
+    
+    # Сохраняем ключ с TTL (из настроек, по умолчанию 24 часа)
+    ttl = getattr(settings, 'KEY_CACHE_TTL', 86400)  # 24 часа в секундах
+    cache.set(cache_key, True, ttl)
+    
+    return False  # Новый ключ
