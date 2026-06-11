@@ -138,7 +138,6 @@ def block_ticket_service(ticket_id: str, moderator, blocking_reason_ids: list, c
         # Создаем новые field_reports (маппим field_path из OpenAPI на field_name из модели)
         if field_reports:
             for report in field_reports:
-                field_name = 'title' # дефолт
                 path = report.get('field_path', '')
                 if 'title' in path: field_name = 'title'
                 elif 'description' in path: field_name = 'description'
@@ -147,7 +146,6 @@ def block_ticket_service(ticket_id: str, moderator, blocking_reason_ids: list, c
                 elif 'sku_name' in path or 'name' in path: field_name = 'sku_name'
                 elif 'sku_image' in path: field_name = 'sku_image'
                 elif 'price' in path: field_name = 'sku_price'
-                
                 ProductModerationFieldReport.objects.create(
                     product_moderation=moderation,
                     field_name=field_name,

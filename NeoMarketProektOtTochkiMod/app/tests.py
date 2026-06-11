@@ -8,7 +8,7 @@ from rest_framework import status
 from django.urls import reverse
 from django.conf import settings
 
-from .models import ProductModeration, ProductBlockingReason
+from .models import ProductModeration, ProductBlockingReason, ProductModerationFieldReport
 
 User = get_user_model()
 
@@ -373,3 +373,155 @@ class B2BEventFlowTests(APITestCase):
         
         # Должен вернуться 401 Unauthorized
         self.assertEqual(response.status_code, 401)
+
+class SoftBlockTests(APITestCase):
+    def setUp(self):
+        # Создаем двух модераторов (один для владельца тикета, второй для проверки 403)
+        self.moderator1 = User.objects.create_user(username='mod1', password='password', email='mod1@test.com')
+        self.moderator2 = User.objects.create_user(username='mod2', password='password', email='mod2@test.com')
+        
+        # Создаем причины блокировки (soft и hard)
+        self.soft_reason = ProductBlockingReason.objects.create(
+            id=uuid.uuid4(),
+            title="Низкое качество фото",
+            hard_block=False
+        )
+        self.hard_reason = ProductBlockingReason.objects.create(
+            id=uuid.uuid4(),
+            title="Запрещенный товар",
+            hard_block=True
+        )
+        
+        # Создаем тестовый тикет модерации в статусе IN_REVIEW, привязанный к moderator1
+        self.product_id = uuid.uuid4()
+        self.seller_id = uuid.uuid4()
+        
+        self.moderation = ProductModeration.objects.create(
+            id=uuid.uuid4(),
+            product_id=self.product_id,
+            seller_id=self.seller_id,
+            status=ProductModeration.StatusChoices.IN_REVIEW,
+            queue_priority=2,
+            json_after={"title": "Test Product", "category_id": str(uuid.uuid4())},
+            moderator_id=self.moderator1
+        )
+        
+        self.url = reverse('block-ticket', kwargs={'ticket_id': self.moderation.id})
+
+    @patch('app.services.requests.post')
+    def test_soft_block_transitions_to_blocked_with_field_reports(self, mock_post):
+        """
+        soft_block_transitions_to_blocked_with_field_reports: 
+        Happy path. Тикет переходит в BLOCKED, сохраняются field_reports.
+        """
+        mock_post.return_value.status_code = 204  # Эмуляция успешного ответа B2B
+        
+        self.client.force_authenticate(user=self.moderator1)
+        
+        payload = {
+            "blocking_reason_ids": [str(self.soft_reason.id)],
+            "comment": "Пожалуйста, загрузите фото в лучшем качестве",
+            "field_reports": [
+                {
+                    "field_path": "images[0].url",
+                    "message": "Фото размыто",
+                    "severity": "ERROR"
+                },
+                {
+                    "field_path": "title",
+                    "message": "Слишком короткое название",
+                    "severity": "WARNING"
+                }
+            ]
+        }
+        
+        response = self.client.post(self.url, payload, format='json')
+        self.assertEqual(response.status_code, 200)
+        
+        # Проверяем изменение статуса и привязку причины
+        self.moderation.refresh_from_db()
+        self.assertEqual(self.moderation.status, ProductModeration.StatusChoices.BLOCKED)
+        self.assertEqual(self.moderation.blocking_reason, self.soft_reason)
+        
+        # Проверяем, что field_reports сохранились в БД
+        reports = ProductModerationFieldReport.objects.filter(product_moderation=self.moderation)
+        self.assertEqual(reports.count(), 2)
+
+    @patch('app.services.requests.post')
+    def test_soft_block_emits_event_to_b2b(self, mock_post):
+        """
+        soft_block_emits_event_to_b2b: 
+        Проверяем, что событие BLOCKED с hard_block=false уходит в B2B.
+        """
+        mock_post.return_value.status_code = 204
+        
+        self.client.force_authenticate(user=self.moderator1)
+        
+        payload = {
+            "blocking_reason_ids": [str(self.soft_reason.id)],
+            "comment": "Исправьте описание"
+        }
+        
+        self.client.post(self.url, payload, format='json')
+        
+        # Проверяем факт вызова B2B и содержимое payload
+        mock_post.assert_called_once()
+        args, kwargs = mock_post.call_args
+        self.assertIn('/api/v1/moderation/events', args[0])
+        
+        event_payload = kwargs['json']
+        self.assertEqual(event_payload['event_type'], 'BLOCKED')
+        self.assertFalse(event_payload['hard_block']) # Soft block -> hard_block is False
+        self.assertEqual(event_payload['blocking_reason_id'], str(self.soft_reason.id))
+
+    def test_soft_block_unknown_reason_returns_400(self):
+        """
+        soft_block_unknown_reason_returns_400: 
+        Несуществующий blocking_reason_id возвращает 400.
+        """
+        self.client.force_authenticate(user=self.moderator1)
+        
+        payload = {
+            "blocking_reason_ids": [str(uuid.uuid4())], # Несуществующий UUID
+            "comment": "Тест"
+        }
+        
+        response = self.client.post(self.url, payload, format='json')
+        self.assertEqual(response.status_code, 400)
+
+    def test_soft_block_others_card_returns_403(self):
+        """
+        soft_block_others_card_returns_403: 
+        Попытка заблокировать чужую карточку возвращает 403.
+        """
+        # Аутентифицируемся под moderator2, но тикет принадлежит moderator1
+        self.client.force_authenticate(user=self.moderator2)
+        
+        payload = {
+            "blocking_reason_ids": [str(self.soft_reason.id)],
+            "comment": "Тест"
+        }
+        
+        response = self.client.post(self.url, payload, format='json')
+        self.assertEqual(response.status_code, 403)
+
+    def test_soft_block_invalid_field_name_returns_400(self):
+        """
+        soft_block_invalid_field_name_returns_400: 
+        Поле field_name вне допустимого enum возвращает 400.
+        """
+        self.client.force_authenticate(user=self.moderator1)
+        
+        payload = {
+            "blocking_reason_ids": [str(self.soft_reason.id)],
+            "comment": "Тест",
+            "field_reports": [
+                {
+                    "field_path": "totally_invalid_enum_value", 
+                    "message": "Невалидное поле"
+                }
+            ]
+        }
+        
+        response = self.client.post(self.url, payload, format='json')
+        self.assertEqual(response.status_code, 400)
