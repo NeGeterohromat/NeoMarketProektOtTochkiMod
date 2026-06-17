@@ -2,11 +2,15 @@ import uuid
 from unittest.mock import patch, Mock
 
 from django.test import override_settings
+import threading
+from datetime import timedelta
+from django.utils import timezone
 from django.contrib.auth import get_user_model
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase, APIClient, APITransactionTestCase
 from rest_framework import status
 from django.urls import reverse
 from django.conf import settings
+from django.db import connection
 
 from .models import ProductModeration, ProductBlockingReason, ProductModerationFieldReport
 
@@ -525,3 +529,99 @@ class SoftBlockTests(APITestCase):
         
         response = self.client.post(self.url, payload, format='json')
         self.assertEqual(response.status_code, 400)
+
+class ClaimTicketTests(APITransactionTestCase):
+    def setUp(self):
+        self.moderator1 = User.objects.create_user(username='mod1', password='pass')
+        self.moderator2 = User.objects.create_user(username='mod2', password='pass')
+        self.url = '/api/v1/queue/claim/'
+        
+        # Создаем тикеты с разными приоритетами и временем обновления
+        self.ticket1 = ProductModeration.objects.create(
+            product_id='00000000-0000-0000-0000-000000000001',
+            seller_id='00000000-0000-0000-0000-000000000001',
+            status=ProductModeration.StatusChoices.PENDING,
+            queue_priority=2,
+            json_after={'category_id': '00000000-0000-0000-0000-000000000001'}
+        )
+        # Имитируем, что ticket1 очень старый
+        ProductModeration.objects.filter(id=self.ticket1.id).update(
+            date_updated=timezone.now() - timedelta(hours=2)
+        )
+        
+        self.ticket2 = ProductModeration.objects.create(
+            product_id='00000000-0000-0000-0000-000000000002',
+            seller_id='00000000-0000-0000-0000-000000000001',
+            status=ProductModeration.StatusChoices.PENDING,
+            queue_priority=1, # Высший приоритет
+            json_after={'category_id': '00000000-0000-0000-0000-000000000001'}
+        )
+        # Имитируем, что ticket2 новее
+        ProductModeration.objects.filter(id=self.ticket2.id).update(
+            date_updated=timezone.now() - timedelta(hours=1)
+        )
+
+        self.ticket3 = ProductModeration.objects.create(
+            product_id='00000000-0000-0000-0000-000000000003',
+            seller_id='00000000-0000-0000-0000-000000000003',
+            status=ProductModeration.StatusChoices.PENDING,
+            queue_priority=2,
+            json_after={'category_id': '00000000-0000-0000-0000-000000000001'}
+        )
+
+    def test_next_returns_oldest_pending(self):
+        """Самая старая PENDING карточка переходит в IN_REVIEW"""
+        self.client.force_authenticate(user=self.moderator1)
+        # Запрашиваем конкретно приоритет 2
+        response = self.client.post(self.url, {'queue_priority': 2})
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], str(self.ticket1.id))
+        self.assertEqual(response.data['status'], 'IN_REVIEW')
+        self.assertEqual(response.data['assigned_moderator_id'], str(self.moderator1.id))
+
+    def test_concurrent_two_moderators_get_different_cards(self):
+        """Две сессии не получают одну карточку (эмуляция через threading)"""
+        results = {}
+        def claim_ticket(user, user_id):
+            from rest_framework.test import APIClient
+            client = APIClient()
+            client.force_authenticate(user=user)
+            response = client.post(self.url)
+            results[user_id] = response.data.get('id') if response.status_code == 200 else None
+            connection.close() # Важно закрывать соединение в потоках
+
+        t1 = threading.Thread(target=claim_ticket, args=(self.moderator1, 1))
+        t2 = threading.Thread(target=claim_ticket, args=(self.moderator2, 2))
+        
+        t1.start()
+        t2.start()
+        
+        t1.join()
+        t2.join()
+        
+        # Оба модератора должны получить по карточке, и они должны быть разными
+        self.assertIsNotNone(results[1])
+        self.assertIsNotNone(results[2])
+        self.assertNotEqual(results[1], results[2])
+
+    def test_empty_queue_returns_204(self):
+        """Пустая очередь возвращает 204"""
+        ProductModeration.objects.all().delete()
+        self.client.force_authenticate(user=self.moderator1)
+        
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_moderator_already_has_in_review_returns_409(self):
+        """Попытка взять вторую карточку с активной IN_REVIEW отклоняется"""
+        self.client.force_authenticate(user=self.moderator1)
+        
+        # Берем первый тикет
+        response1 = self.client.post(self.url)
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        
+        # Пытаемся взять второй
+        response2 = self.client.post(self.url)
+        self.assertEqual(response2.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response2.data['code'], 'CONFLICT')

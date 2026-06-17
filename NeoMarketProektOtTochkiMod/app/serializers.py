@@ -27,3 +27,18 @@ class B2BEventSerializer(serializers.Serializer):
     idempotency_key = serializers.UUIDField()
     occurred_at = serializers.DateTimeField()
     payload = serializers.DictField()
+
+class ClaimTicketRequestSerializer(serializers.Serializer):
+    queue_priority = serializers.IntegerField(
+        min_value=1, 
+        max_value=4, 
+        required=False, 
+        allow_null=True,
+        help_text="Опциональный фильтр по приоритету (1-4)"
+    )
+    category_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        allow_empty=True,
+        help_text="Опциональный фильтр по категориям"
+    )

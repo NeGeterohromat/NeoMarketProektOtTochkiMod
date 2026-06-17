@@ -1,4 +1,5 @@
 import requests
+from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
 from django.db import transaction
@@ -285,3 +286,55 @@ def check_idempotency(idempotency_key: str) -> bool:
     cache.set(cache_key, True, ttl)
     
     return False  # Новый ключ
+
+
+def claim_next_ticket_service(moderator, queue_priority=None, category_ids=None):
+    """
+    Атомарно выбирает топовый PENDING-тикет, переводит в IN_REVIEW и привязывает к модератору.
+    Защищено от race-conditions через SELECT FOR UPDATE SKIP LOCKED.
+    """
+    # 1. Ленивый возврат просроченных тикетов в очередь (если модератор пропал)
+    timeout_minutes = getattr(settings, 'IN_REVIEW_TIMEOUT_MINUTES', 30)
+    expiration_time = timezone.now() - timedelta(minutes=timeout_minutes)
+    ProductModeration.objects.filter(
+        status=ProductModeration.StatusChoices.IN_REVIEW,
+        date_updated__lt=expiration_time
+    ).update(status=ProductModeration.StatusChoices.PENDING, moderator_id=None)
+
+    # 2. Проверка: есть ли у модератора уже активный тикет в работе
+    if ProductModeration.objects.filter(
+        moderator_id=moderator, 
+        status=ProductModeration.StatusChoices.IN_REVIEW
+    ).exists():
+        raise ModerationInvalidStatusError("Moderator already has an active ticket in IN_REVIEW status")
+
+    # 3. Определяем порядок перебора приоритетов
+    priorities = [queue_priority] if queue_priority is not None else [1, 2, 3, 4]
+
+    # 4. Атомарный поиск и блокировка тикета
+    with transaction.atomic():
+        for priority in priorities:
+            qs = ProductModeration.objects.filter(
+                status=ProductModeration.StatusChoices.PENDING,
+                queue_priority=priority
+            )
+            
+            # Фильтр по категориям внутри JSON-поля
+            if category_ids:
+                qs = qs.filter(json_after__category_id__in=category_ids)
+                
+            # Сортировка FIFO (самые старые сначала)
+            qs = qs.order_by('date_updated')
+            
+            # SKIP LOCKED пропускает строки, заблокированные другими транзакциями
+            ticket = qs.select_for_update(skip_locked=True).first()
+            
+            
+            if ticket:
+                ticket.status = ProductModeration.StatusChoices.IN_REVIEW
+                ticket.moderator_id = moderator
+                # date_updated обновится автоматически благодаря auto_now=True
+                ticket.save(update_fields=['status', 'moderator_id', 'date_updated'])
+                return ticket
+                
+    return None
