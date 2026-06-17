@@ -338,3 +338,70 @@ def claim_next_ticket_service(moderator, queue_priority=None, category_ids=None)
                 return ticket
                 
     return None
+
+def get_blocking_reasons_service(hard_block: bool = None, is_active: bool = True):
+    """
+    Возвращает список причин блокировки с фильтрацией.
+    """
+    queryset = ProductBlockingReason.objects.all()
+    
+    if hard_block is not None:
+        queryset = queryset.filter(hard_block=hard_block)
+    
+    if is_active is not None:
+        queryset = queryset.filter(is_active=is_active)
+    
+    return queryset
+
+
+def create_blocking_reason_service(code: str, title: str, hard_block: bool, description: str = ""):
+    """
+    Создает новую причину блокировки.
+    """
+    if ProductBlockingReason.objects.filter(code=code).exists():
+        raise ValueError(f"Reason with code '{code}' already exists")
+    
+    return ProductBlockingReason.objects.create(
+        code=code,
+        title=title,
+        description=description,
+        hard_block=hard_block,
+        is_active=True
+    )
+
+
+def update_blocking_reason_service(reason_id: str, **kwargs):
+    """
+    Обновляет причину блокировки.
+    """
+    try:
+        reason = ProductBlockingReason.objects.get(id=reason_id)
+    except ProductBlockingReason.DoesNotExist:
+        raise ValueError("Blocking reason not found")
+    
+    for key, value in kwargs.items():
+        if value is not None:
+            setattr(reason, key, value)
+    
+    reason.save()
+    return reason
+
+
+def deactivate_blocking_reason_service(reason_id: str):
+    """
+    Деактивирует причину блокировки (soft-delete).
+    Проверяет ссылочную целостность: если на причину ссылаются карточки модерации,
+    деактивация запрещена.
+    """
+    try:
+        reason = ProductBlockingReason.objects.get(id=reason_id)
+    except ProductBlockingReason.DoesNotExist:
+        raise ValueError("Blocking reason not found")
+    
+    # Проверка ссылочной целостности
+    if ProductModeration.objects.filter(blocking_reason=reason).exists():
+        raise ValueError("Cannot deactivate reason: it is referenced by moderation cards")
+    
+    reason.is_active = False
+    reason.save()
+    return reason

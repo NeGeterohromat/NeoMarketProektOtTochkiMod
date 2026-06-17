@@ -14,19 +14,35 @@ class ProductBlockingReason(models.Model):
         editable=False,
         help_text="Идентификатор (генерируется автоматически)"
     )
+    code = models.CharField(
+        max_length=64,
+        unique=True,
+        verbose_name="Код причины",
+        help_text="Уникальный код причины (например, FORBIDDEN_GOODS)"
+    )
     title = models.CharField(
         max_length=255, 
         verbose_name="Текст причины блокировки"
     )
+    description = models.TextField(
+        blank=True,
+        default="",
+        verbose_name="Описание причины"
+    )
     hard_block = models.BooleanField(
         default=False, 
         verbose_name="Перманентная блокировка"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активна"
     )
 
     class Meta:
         db_table = 'product_blocking_reasons'
         verbose_name = 'Причина блокировки'
         verbose_name_plural = 'Причины блокировок'
+        ordering = ['title']
 
     def __str__(self):
         return self.title

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from .models import ProductBlockingReason
 
 class ApproveTicketSerializer(serializers.Serializer):
     comment = serializers.CharField(
@@ -42,3 +43,40 @@ class ClaimTicketRequestSerializer(serializers.Serializer):
         allow_empty=True,
         help_text="Опциональный фильтр по категориям"
     )
+
+class ProductBlockingReasonSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для справочника причин блокировки.
+    Соответствует BlockingReasonResponse из moderation.yaml
+    """
+    class Meta:
+        model = ProductBlockingReason
+        fields = ['id', 'code', 'title', 'description', 'hard_block', 'is_active']
+        read_only_fields = ['id']
+
+
+class ProductBlockingReasonCreateSerializer(serializers.Serializer):
+    """
+    Сериализатор для создания причины блокировки (admin).
+    Соответствует BlockingReasonCreateRequest из moderation.yaml
+    """
+    code = serializers.CharField(max_length=64)
+    title = serializers.CharField(max_length=200)
+    description = serializers.CharField(max_length=2000, required=False, allow_blank=True)
+    hard_block = serializers.BooleanField()
+
+    def validate_code(self, value):
+        import re
+        if not re.match(r'^[A-Z_]+$', value):
+            raise serializers.ValidationError("Code must contain only uppercase letters and underscores")
+        return value
+
+
+class ProductBlockingReasonUpdateSerializer(serializers.Serializer):
+    """
+    Сериализатор для обновления причины блокировки (admin).
+    Соответствует BlockingReasonUpdateRequest из moderation.yaml
+    """
+    title = serializers.CharField(max_length=200, required=False)
+    description = serializers.CharField(max_length=2000, required=False, allow_blank=True)
+    is_active = serializers.BooleanField(required=False)

@@ -8,7 +8,7 @@ from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from app import forms, views
 
-from app.views import BlockTicketView, B2BEventReceiverView, CreateEventAPIView, ApproveProductView, UpdateTicketView, ClaimTicketView
+from app.views import BlockTicketView, B2BEventReceiverView, CreateEventAPIView, ApproveProductView, UpdateTicketView, ClaimTicketView, BlockingReasonDetailView, BlockingReasonsListView
 
 
 urlpatterns = [
@@ -38,4 +38,6 @@ urlpatterns = [
         name='approve-product'
     ),
     path('api/v1/queue/claim/', ClaimTicketView.as_view(), name='claim-ticket'),
+    path('api/v1/blocking-reasons', BlockingReasonsListView.as_view(), name='blocking-reasons-list'),
+    path('api/v1/blocking-reasons/<uuid:reason_id>', BlockingReasonDetailView.as_view(), name='blocking-reason-detail'),
 ]

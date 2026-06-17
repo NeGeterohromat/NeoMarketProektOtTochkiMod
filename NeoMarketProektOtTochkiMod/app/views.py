@@ -51,9 +51,26 @@ from rest_framework.response import Response
 from django.conf import settings
 from datetime import timedelta
 
-from .serializers import ApproveTicketSerializer, BlockTicketSerializer, B2BEventSerializer, ClaimTicketRequestSerializer
-from .services import approve_ticket_service, block_ticket_service, handle_b2b_event_service, claim_next_ticket_service
-from .models import ProductModeration
+from .serializers import (
+    ApproveTicketSerializer, 
+    BlockTicketSerializer, 
+    B2BEventSerializer,
+    ClaimTicketRequestSerializer, 
+    ProductBlockingReasonSerializer,
+    ProductBlockingReasonCreateSerializer,
+    ProductBlockingReasonUpdateSerializer
+    )
+from .services import (
+    approve_ticket_service, 
+    block_ticket_service, 
+    handle_b2b_event_service, 
+    claim_next_ticket_service,    
+    get_blocking_reasons_service,
+    create_blocking_reason_service,
+    update_blocking_reason_service,
+    deactivate_blocking_reason_service
+    )
+from .models import ProductModeration, ProductBlockingReason
 from .authentication import ServiceKeyAuthentication
 from .exceptions import (
     error_response,
@@ -239,3 +256,90 @@ class ClaimTicketView(APIView):
             return error_response("CONFLICT", str(e), status.HTTP_409_CONFLICT)
         except Exception as e:
             return error_response("BAD_REQUEST", str(e), status.HTTP_400_BAD_REQUEST)
+
+class BlockingReasonsListView(APIView):
+    """
+    GET /api/v1/blocking-reasons
+    Справочник причин блокировки.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        hard_block = request.query_params.get('hard_block')
+        is_active = request.query_params.get('is_active', 'true')
+        
+        # Преобразуем строковые параметры в boolean
+        hard_block_bool = None
+        if hard_block is not None:
+            hard_block_bool = hard_block.lower() == 'true'
+        
+        is_active_bool = is_active.lower() == 'true' if is_active else True
+        
+        reasons = get_blocking_reasons_service(
+            hard_block=hard_block_bool,
+            is_active=is_active_bool
+        )
+        
+        serializer = ProductBlockingReasonSerializer(reasons, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """
+        POST /api/v1/blocking-reasons
+        Создание причины блокировки (только для admin).
+        """
+        if not request.user.is_staff and not hasattr(request.user, 'role') or (hasattr(request.user, 'role') and request.user.role != 'ADMIN'):
+            return error_response("FORBIDDEN", "Admin access required", status.HTTP_403_FORBIDDEN)
+        
+        serializer = ProductBlockingReasonCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            reason = create_blocking_reason_service(
+                code=serializer.validated_data['code'],
+                title=serializer.validated_data['title'],
+                hard_block=serializer.validated_data['hard_block'],
+                description=serializer.validated_data.get('description', '')
+            )
+            response_serializer = ProductBlockingReasonSerializer(reason)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            return error_response("CONFLICT", str(e), status.HTTP_409_CONFLICT)
+
+
+class BlockingReasonDetailView(APIView):
+    """
+    PATCH/DELETE /api/v1/blocking-reasons/{reason_id}
+    Обновление и деактивация причины блокировки (только для admin).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, reason_id):
+        if not request.user.is_staff and not hasattr(request.user, 'role') or (hasattr(request.user, 'role') and request.user.role != 'ADMIN'):
+            return error_response("FORBIDDEN", "Admin access required", status.HTTP_403_FORBIDDEN)
+        
+        serializer = ProductBlockingReasonUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            reason = update_blocking_reason_service(reason_id, **serializer.validated_data)
+            response_serializer = ProductBlockingReasonSerializer(reason)
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return error_response("NOT_FOUND", str(e), status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, reason_id):
+        """
+        Деактивация причины блокировки (soft-delete).
+        """
+        if not request.user.is_staff and not hasattr(request.user, 'role') or (hasattr(request.user, 'role') and request.user.role != 'ADMIN'):
+            return error_response("FORBIDDEN", "Admin access required", status.HTTP_403_FORBIDDEN)
+        
+        try:
+            deactivate_blocking_reason_service(reason_id)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ValueError as e:
+            if "not found" in str(e).lower():
+                return error_response("NOT_FOUND", str(e), status.HTTP_404_NOT_FOUND)
+            else:
+                return error_response("CONFLICT", str(e), status.HTTP_409_CONFLICT)
