@@ -8,7 +8,7 @@ from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from app import forms, views
 
-from app.views import BlockTicketView, B2BEventReceiverView, CreateEventAPIView, ApproveProductView, UpdateTicketView
+from app.views import BlockTicketView, B2BEventReceiverView, CreateEventAPIView, ApproveProductView, UpdateTicketView, ClaimTicketView
 
 
 urlpatterns = [
@@ -37,4 +37,5 @@ urlpatterns = [
         ApproveProductView.as_view(), 
         name='approve-product'
     ),
+    path('api/v1/queue/claim/', ClaimTicketView.as_view(), name='claim-ticket'),
 ]

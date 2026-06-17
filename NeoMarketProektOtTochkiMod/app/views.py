@@ -44,15 +44,15 @@ Definition of views.
 #         }
 #     )
 
-from csv import Error
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.conf import settings
+from datetime import timedelta
 
-from .serializers import ApproveTicketSerializer, BlockTicketSerializer, B2BEventSerializer
-from .services import approve_ticket_service, block_ticket_service, handle_b2b_event_service
+from .serializers import ApproveTicketSerializer, BlockTicketSerializer, B2BEventSerializer, ClaimTicketRequestSerializer
+from .services import approve_ticket_service, block_ticket_service, handle_b2b_event_service, claim_next_ticket_service
 from .models import ProductModeration
 from .authentication import ServiceKeyAuthentication
 from .exceptions import (
@@ -199,3 +199,43 @@ class UpdateTicketView(APIView):
 
     def put(self, request, ticket_id):
         return self.post(request, ticket_id)
+
+class ClaimTicketView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ClaimTicketRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            ticket = claim_next_ticket_service(
+                moderator=request.user,
+                queue_priority=serializer.validated_data.get('queue_priority'),
+                category_ids=serializer.validated_data.get('category_ids')
+            )
+            
+            if not ticket:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+                
+            # Формируем ответ строго по схеме TicketResponse из moderation.yaml
+            response_data = {
+                "id": str(ticket.id),
+                "product_id": str(ticket.product_id),
+                "seller_id": str(ticket.seller_id),
+                "category_id": ticket.json_after.get('category_id') if ticket.json_after else None,
+                "kind": "CREATE" if ticket.json_before is None else "EDIT",
+                "status": ticket.status,
+                "queue_priority": ticket.queue_priority,
+                "assigned_moderator_id": str(ticket.moderator_id.id) if ticket.moderator_id else None,
+                "claimed_at": ticket.date_updated.isoformat() if ticket.date_updated else None,
+                "claim_expires_at": (ticket.date_updated + timedelta(minutes=30)).isoformat() if ticket.date_updated else None,
+                "decision_at": ticket.date_moderation.isoformat() if ticket.date_moderation else None,
+                "created_at": ticket.date_created.isoformat(),
+                "updated_at": ticket.date_updated.isoformat()
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except ModerationInvalidStatusError as e:
+            return error_response("CONFLICT", str(e), status.HTTP_409_CONFLICT)
+        except Exception as e:
+            return error_response("BAD_REQUEST", str(e), status.HTTP_400_BAD_REQUEST)
