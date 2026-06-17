@@ -38,6 +38,9 @@
     <Compile Include="app\authentication.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="app\admin.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\services.py">
       <SubType>Code</SubType>
     </Compile>

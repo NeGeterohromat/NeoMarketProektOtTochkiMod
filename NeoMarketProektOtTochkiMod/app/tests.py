@@ -388,12 +388,14 @@ class SoftBlockTests(APITestCase):
         self.soft_reason = ProductBlockingReason.objects.create(
             id=uuid.uuid4(),
             title="Низкое качество фото",
-            hard_block=False
+            hard_block=False,
+            code="LOW_QUALITY"
         )
         self.hard_reason = ProductBlockingReason.objects.create(
             id=uuid.uuid4(),
             title="Запрещенный товар",
-            hard_block=True
+            hard_block=True,
+            code="ILLEGAL_PRODUCT"
         )
         
         # Создаем тестовый тикет модерации в статусе IN_REVIEW, привязанный к moderator1
@@ -625,3 +627,207 @@ class ClaimTicketTests(APITransactionTestCase):
         response2 = self.client.post(self.url)
         self.assertEqual(response2.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(response2.data['code'], 'CONFLICT')
+
+class BlockingReasonsAPITestCase(APITestCase):
+    """
+    Тесты для справочника причин блокировки.
+    """
+    
+    def setUp(self):
+        """Создание тестовых данных."""
+        # Создаем тестового пользователя
+        self.user = User.objects.create_user(
+            email='moderator@test.com',
+            password='testpass123',
+            first_name='Test',
+            username='Test'
+        )
+        
+        # Создаем тестового админа
+        self.admin_user = User.objects.create_user(
+            email='admin@test.com',
+            password='testpass123',
+            first_name='Admin',
+            username='TestAdmin',
+            is_staff=True
+        )
+        
+        # Создаем активные причины
+        self.active_reason_1 = ProductBlockingReason.objects.create(
+            code='BAD_PHOTO',
+            title='Некачественное фото',
+            description='Фотографии не соответствуют требованиям',
+            hard_block=False,
+            is_active=True
+        )
+        
+        self.active_reason_2 = ProductBlockingReason.objects.create(
+            code='FORBIDDEN_GOODS',
+            title='Запрещенный товар',
+            description='Товар запрещен к продаже',
+            hard_block=True,
+            is_active=True
+        )
+        
+        # Создаем неактивную причину
+        self.inactive_reason = ProductBlockingReason.objects.create(
+            code='OLD_REASON',
+            title='Старая причина',
+            description='Устаревшая причина',
+            hard_block=False,
+            is_active=False
+        )
+    
+    def test_list_returns_active_reasons(self):
+        """
+        Happy path: GET /api/v1/blocking-reasons возвращает только активные причины
+        с полями id, title, hard_block.
+        """
+        self.client.force_authenticate(user=self.user)
+        
+        response = self.client.get('/api/v1/blocking-reasons')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)  # Только активные причины
+        
+        # Проверяем структуру ответа
+        for reason in response.data:
+            self.assertIn('id', reason)
+            self.assertIn('title', reason)
+            self.assertIn('hard_block', reason)
+            self.assertIn('is_active', reason)
+            self.assertTrue(reason['is_active'])  # Все причины должны быть активными
+        
+        # Проверяем, что неактивная причина не вернулась
+        reason_ids = [r['id'] for r in response.data]
+        self.assertNotIn(str(self.inactive_reason.id), reason_ids)
+    
+    def test_inactive_reasons_not_visible(self):
+        """
+        Unhappy path: деактивированные причины не отдаются API.
+        """
+        self.client.force_authenticate(user=self.user)
+        
+        # Запрос без фильтров (по умолчанию is_active=true)
+        response = self.client.get('/api/v1/blocking-reasons')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        reason_ids = [r['id'] for r in response.data]
+        self.assertNotIn(str(self.inactive_reason.id), reason_ids)
+        
+        # Явный фильтр is_active=true
+        response = self.client.get('/api/v1/blocking-reasons?is_active=true')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        reason_ids = [r['id'] for r in response.data]
+        self.assertNotIn(str(self.inactive_reason.id), reason_ids)
+        
+        # Фильтр is_active=false должен вернуть только неактивные
+        response = self.client.get('/api/v1/blocking-reasons?is_active=false')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], str(self.inactive_reason.id))
+    
+    def test_filter_by_hard_block(self):
+        """
+        Тест фильтрации по hard_block.
+        """
+        self.client.force_authenticate(user=self.user)
+        
+        # Фильтр hard_block=true
+        response = self.client.get('/api/v1/blocking-reasons?hard_block=true')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertTrue(response.data[0]['hard_block'])
+        
+        # Фильтр hard_block=false
+        response = self.client.get('/api/v1/blocking-reasons?hard_block=false')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertFalse(response.data[0]['hard_block'])
+    
+    def test_referenced_reason_cannot_be_deleted(self):
+        """
+        Попытка удалить причину, на которую ссылается карточка модерации, → запрет.
+        """
+        self.client.force_authenticate(user=self.admin_user)
+        
+        # Создаем карточку модерации с ссылкой на причину
+        moderation = ProductModeration.objects.create(
+            product_id='12345678-1234-5678-1234-567812345678',
+            seller_id='87654321-4321-8765-4321-876543218765',
+            status=ProductModeration.StatusChoices.BLOCKED,
+            queue_priority=2,
+            json_after={'test': 'data'},
+            blocking_reason=self.active_reason_1
+        )
+        
+        # Пытаемся деактивировать причину
+        response = self.client.delete(f'/api/v1/blocking-reasons/{self.active_reason_1.id}')
+        
+        # Должны получить ошибку 409 Conflict
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertIn('referenced', response.data['message'].lower())
+        
+        # Причина должна остаться активной
+        self.active_reason_1.refresh_from_db()
+        self.assertTrue(self.active_reason_1.is_active)
+    
+    def test_deactivate_unused_reason(self):
+        """
+        Деактивация неиспользуемой причины должна проходить успешно.
+        """
+        self.client.force_authenticate(user=self.admin_user)
+        
+        # Создаем новую неиспользуемую причину
+        unused_reason = ProductBlockingReason.objects.create(
+            code='UNUSED_REASON',
+            title='Неиспользуемая причина',
+            hard_block=False,
+            is_active=True
+        )
+        
+        # Деактивируем
+        response = self.client.delete(f'/api/v1/blocking-reasons/{unused_reason.id}')
+        
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        
+        # Проверяем, что причина деактивирована
+        unused_reason.refresh_from_db()
+        self.assertFalse(unused_reason.is_active)
+    
+    def test_create_reason_admin_only(self):
+        """
+        Создание причины доступно только администраторам.
+        """
+        # Обычный модератор не может создавать
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post('/api/v1/blocking-reasons', {
+            'code': 'NEW_REASON',
+            'title': 'Новая причина',
+            'hard_block': False
+        })
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+        # Админ может создавать
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.post('/api/v1/blocking-reasons', {
+            'code': 'NEW_REASON',
+            'title': 'Новая причина',
+            'hard_block': False
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['code'], 'NEW_REASON')
+    
+    def test_create_reason_duplicate_code(self):
+        """
+        Попытка создать причину с дублирующимся кодом → 409 Conflict.
+        """
+        self.client.force_authenticate(user=self.admin_user)
+        
+        response = self.client.post('/api/v1/blocking-reasons', {
+            'code': 'BAD_PHOTO',  # Уже существует
+            'title': 'Другая причина',
+            'hard_block': False
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
